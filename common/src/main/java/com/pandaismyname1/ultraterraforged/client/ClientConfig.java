@@ -14,7 +14,7 @@ import com.pandaismyname1.ultraterraforged.UTFCommon;
 import com.pandaismyname1.ultraterraforged.config.ModpackConfig;
 import com.pandaismyname1.ultraterraforged.platform.ConfigUtil;
 
-// config/ultraterraforged/client.json; a player's own choices, which take precedence over the modpack's in modpack.json
+// config/tnkterraforged/client.json; a player's own choices, which take precedence over the modpack's in modpack.json
 public record ClientConfig(boolean defaultWorldType) {
 	private static final String DEFAULT_WORLD_TYPE = "useAsDefaultWorldType";
 

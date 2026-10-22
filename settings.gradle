@@ -9,4 +9,4 @@ pluginManagement {
 }
 
 include("common", "fabric", "neoforge")
-rootProject.name = "UltraTerraForged"
+rootProject.name = "TNKTerraForged"

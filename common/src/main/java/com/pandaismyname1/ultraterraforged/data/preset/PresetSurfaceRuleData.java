@@ -664,7 +664,7 @@ public class PresetSurfaceRuleData {
         	// (but not where the surface has floors of its own: reefs, deltas, lagoons, and river and lake beds)
         	preset.oceans().sediment ? SurfaceRules.ifTrue(UTFSurfaceConditions.nearGround(3), SurfaceRules.ifTrue(SurfaceRules.not(UTFSurfaceConditions.any(UTFSurfaceConditions.terrain(TerrainType.CORAL_REEF, TerrainType.DELTA, TerrainType.WETLAND, TerrainType.LAGOON, TerrainType.BARRIER_ISLAND, TerrainType.SAND_BAR, TerrainType.LAKE, TerrainType.RIVER), UTFSurfaceConditions.riverSide(1.0F))), makeSeaFloorRule(properties.seaLevel, noise, yOnSurface, sand, gravel))) : SurfaceRules.ifTrue(NEVER, STONE),
         	SurfaceRules.ifTrue(
-        		SurfaceRules.abovePreliminarySurface(),
+            UTFSurfaceConditions.any(SurfaceRules.abovePreliminarySurface(), UTFSurfaceConditions.nearGround(8)),
         		// tors and skerries are bare rock: the rock layers, or plain stone without them
         		SurfaceRules.ifTrue(SurfaceRules.not(UTFSurfaceConditions.terrain(TerrainType.TOR, TerrainType.SKERRY)), surface)
         	)

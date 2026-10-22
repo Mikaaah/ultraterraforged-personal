@@ -178,7 +178,8 @@ public class BiomeNoise {
 	}
 
 	private void modifyTerrain(Cell cell, float continentEdge) {
-		if (cell.terrain.isOverground() && !cell.terrain.overridesCoast() && continentEdge <= this.controlPoints.coastMarker()) {
+		if (cell.terrain.isOverground() && cell.terrain != TerrainType.MUSHROOM_FIELDS
+				&& !cell.terrain.overridesCoast() && continentEdge <= this.controlPoints.coastMarker()) {
 			cell.terrain = TerrainType.COAST;
 		}
 	}

@@ -45,6 +45,9 @@ public class PresetOptionsTest {
 	private static final Set<String> NOT_EXPOSED = Set.of(
 		PresetFormat.VERSION_KEY,
 		"surface.erosion.snowHeight",
+        // Legacy water-tunnel fields still decode, but TNK3 no longer generates this feature.
+        "caveFeatures.undergroundRivers.enabled",
+        "caveFeatures.undergroundRivers.frequency",
 		// structure options are generated per structure set from the registry, see StructureOptionsTest
 		"structures"
 	);

@@ -73,7 +73,7 @@ public class CaveFeatureSettings {
 	 * Long winding tunnels deep underground with water along their floor.
 	 */
 	public static class UndergroundRivers {
-		private static final UndergroundRivers DEFAULT = new UndergroundRivers(true, 0.4F);
+		private static final UndergroundRivers DEFAULT = new UndergroundRivers(false, 0.4F);
 
 		public static final Codec<UndergroundRivers> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			PresetCodecs.defaulted(Codec.BOOL, "enabled", DEFAULT.enabled).forGetter((o) -> o.enabled),

@@ -128,10 +128,20 @@ public record Landforms(List<Landform> landforms) implements Landform {
 
 	@Override
 	public void apply(Cell cell, float x, float z, Heightmap heightmap) {
-		for (Landform landform : this.landforms) {
-			landform.apply(cell, x, z, heightmap);
-		}
-	}
+        for (Landform landform : this.landforms) {
+            if (!beforeRivers(landform)) landform.apply(cell, x, z, heightmap);
+        }
+    }
+
+    public void applyBeforeRivers(Cell cell, float x, float z, Heightmap heightmap) {
+        for (Landform landform : this.landforms) {
+            if (beforeRivers(landform)) landform.apply(cell, x, z, heightmap);
+        }
+    }
+
+    private static boolean beforeRivers(Landform landform) {
+        return landform instanceof Canyons;
+    }
 
 	@Override
 	public Landform mapNoise(Noise.Visitor visitor) {

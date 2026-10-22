@@ -38,7 +38,7 @@ public class ServerPresetsTest {
 
 	@Test
 	void writesTheDefaultPresetOnceAndReadsEditsBack(@TempDir Path dir) throws Exception {
-		Path file = dir.resolve("ultraterraforged").resolve(ServerPresets.PRESET_FILE);
+		Path file = dir.resolve("tnkterraforged").resolve(ServerPresets.PRESET_FILE);
 		// e.g. the modpack's default
 		PresetLibrary.Entry highlands = PresetLibrary.find("highlands", PresetLibrary.builtins()).orElseThrow();
 		Preset created = ServerPresets.loadOrCreatePreset(file, () -> highlands);

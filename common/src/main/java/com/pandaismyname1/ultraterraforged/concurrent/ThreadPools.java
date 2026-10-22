@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ThreadPools {
     private static final int DEFAULT_WORKERS = Math.max(2, Math.min(8, availableProcessors() - 1));
     public static final ThreadPoolExecutor WORLD_GEN = (ThreadPoolExecutor) Executors.newFixedThreadPool(
-        DEFAULT_WORKERS, daemonFactory("UTF-WorldGen"));
+        DEFAULT_WORKERS, daemonFactory("TNKTerraForged-WorldGen"));
 
     /** Apply the validated config after the loader/platform and generator are ready. */
     public static synchronized void configure(int requested) {

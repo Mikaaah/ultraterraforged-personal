@@ -32,8 +32,8 @@ import com.pandaismyname1.ultraterraforged.data.preset.settings.BuiltinPresets;
 import com.pandaismyname1.ultraterraforged.data.preset.settings.Preset;
 
 /**
- * The presets a player can pick from: the modpack's (config/ultraterraforged/modpack-presets), the built-in ones and
- * those saved in config/ultraterraforged/presets.
+ * The presets a player can pick from: the modpack's (config/tnkterraforged/modpack-presets), the built-in ones and
+ * those saved in config/tnkterraforged/presets.
  */
 public final class PresetLibrary {
 

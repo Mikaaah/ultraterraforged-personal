@@ -28,7 +28,7 @@ public final class FixConfig {
         MAX_CAVE_Y = b.defineInRange("maxCaveBiomeY", 128, -2032, 2031);
         PROTECT_CAVES = b.comment("Prevent the extra UltraTerraForged carving/lining/decorating pass from writing inside tagged Alex's Caves biomes. Ordinary noise caves are unchanged.")
                 .define("protectAlexCaveBiomes", true);
-        VERIFY_LOCATOR = b.comment("In an active UltraTerraForged world, verify /locateacbiome results against the biome source and include the underground Y coordinate.")
+        VERIFY_LOCATOR = b.comment("In an active TNKTerraForged world, verify /locateacbiome results against the biome source and include the underground Y coordinate.")
                 .define("verifyLocateACBiome", true);
         b.pop();
         SPEC = b.build();

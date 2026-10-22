@@ -24,6 +24,12 @@ import com.pandaismyname1.ultraterraforged.server.UTFMinecraftServer;
 public class UTFNeoForge {
 
     public UTFNeoForge(IEventBus modBus, ModContainer modContainer) {
+        try {
+            com.pandaismyname1.ultraterraforged.platform.ConfigMigration.migrate(
+                net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get());
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Cannot initialize TNKTerraForged configuration", e);
+        }
     	UTFCommon.bootstrap();
         // No Alex classes are initialized unless the optional mod is installed.
         if (ModList.get().isLoaded("alexscaves")) {
@@ -31,7 +37,7 @@ public class UTFNeoForge {
         }
         // Native currents are a built-in, optional NeoForge feature.
         if (ModList.get().isLoaded("streamsreflowing")) {
-            nl.townsandkingdoms.utfstreams.UtfStreams.initialize(modBus, modContainer);
+            nl.townsandkingdoms.terraforged.compat.streams.UtfStreams.initialize(modBus, modContainer);
         }
 
     	modBus.addListener(UTFNeoForge::gatherData);

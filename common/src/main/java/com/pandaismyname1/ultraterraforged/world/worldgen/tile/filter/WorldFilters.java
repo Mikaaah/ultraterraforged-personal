@@ -8,6 +8,7 @@ import com.pandaismyname1.ultraterraforged.world.worldgen.heightmap.Heightmap;
 import com.pandaismyname1.ultraterraforged.world.worldgen.tile.Tile;
 
 public class WorldFilters {
+    private final GeneratorContext context;
     private Smoothing smoothing;
     private Steepness steepness;
     private BeachDetect beach;
@@ -19,6 +20,7 @@ public class WorldFilters {
     private int smoothingIterations;
     
     public WorldFilters(GeneratorContext context, Heightmap heightmap) {
+        this.context = context;
         IntFunction<Erosion> factory = Erosion.factory(context);
         this.settings = context.preset.filters();
         this.beach = BeachDetect.make(context);
@@ -62,5 +64,13 @@ public class WorldFilters {
     
     public void applyPostProcessing(Tile map, int seedX, int seedZ) {
         this.processing.apply(map, seedX, seedZ, 1);
+        if (GeneratorContext.retainRiverData) {
+            int size = map.getChunkSize().size();
+            int minX = map.getBlockX() >> 4, minZ = map.getBlockZ() >> 4;
+            for (int z = 0; z < size; z++) for (int x = 0; x < size; x++) {
+                int cx = minX + x, cz = minZ + z;
+                this.context.riverData.capture(cx, cz, map.getChunkReader(cx, cz));
+            }
+        }
     }
 }

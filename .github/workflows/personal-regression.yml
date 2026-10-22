@@ -1,7 +1,7 @@
 name: UTF Personal Regression Tests
 on:
   push:
-    branches: [fix/1.21.1-caverns-ui-stability, fix/1.21.1-performance-followup, work/20261020-cave-cache-final, main, neoforge-1.21.1, fabric-1.21.1]
+    branches: [fix/tnk3-biome-exclusions, fix/1.21.1-caverns-ui-stability, fix/1.21.1-performance-followup, work/20261020-cave-cache-final, main, neoforge-1.21.1, fabric-1.21.1, fix/river-water-and-generation]
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -23,7 +23,7 @@ jobs:
       - name: Run affected core tests
         run: |
           chmod +x gradlew
-          ./gradlew :common:test --tests '*FailedTileRetryTest' --tests '*WaterContinuityTest' --tests '*LazyCallableTest' --tests '*SiteCacheTest' --tests '*NativeRiverTileCandidatesTest' --tests '*MassiveCavernTest' --tests '*GiantCavernCorridorWindowTest' --tests '*GiantCavernPillarTest' --tests '*PresetOptionsTest' --tests '*CavesTest.giantCavernsHaveLakesAndPillars' -Putf.perfMods=false --no-daemon --stacktrace
+          ./gradlew :common:test --tests '*BiomeExclusionsTest' --tests '*BiomeSurveyTest.tnk3ExpanseCherryGroveSurvey' --tests '*CavernStyleTest' --tests '*ModSurfaceRulesTest' --tests '*PirateCoveTest' --tests '*CaveWaterSafetyTest' --tests '*WaterRimSafetyTest' --tests '*RiverBankSafetyTest' --tests '*ShallowOceanReliefTest' --tests '*MushroomIslandsTest' --tests '*ExpansePresetTest' --tests '*OceansTest' --tests '*FailedTileRetryTest' --tests '*WaterContinuityTest' --tests '*MarineTerrainTest' --tests '*PostProcessingCoverageTest' --tests '*RaisedWaterTest' --tests '*LandformTest' --tests '*RaisedWaterPlacementTest' --tests '*ConfigMigrationTest' --tests '*PresetPackIdentityTest' --tests '*PresetDatapackTest' --tests '*RiverCellCacheTest' --tests '*LazyCallableTest' --tests '*SiteCacheTest' --tests '*NativeRiverTileCandidatesTest' --tests '*GiantCavernCorridorWindowTest' --tests '*MassiveCavernTest' --tests '*GiantCavernPillarTest' --tests '*PresetOptionsTest' --tests '*CavesTest.giantCavernsHaveLakesAndPillars' -Putf.perfMods=false --no-daemon --stacktrace
           ./gradlew :neoforge:verifyStreamsFlowRules :neoforge:verifyStreamsDownhillSearch -Putf.perfMods=false --no-daemon --stacktrace
       - name: Build distributable releases with exact dependency version
         env:
@@ -39,13 +39,13 @@ jobs:
           with zipfile.ZipFile(jars[0]) as z:
               assert z.testzip() is None
               toml = z.read('META-INF/neoforge.mods.toml').decode()
-              assert 'version="1.0.2+1.21.1"' in toml, toml
-          print('Verified NeoForge version 1.0.2+1.21.1:', jars[0])
+          assert 'version="1.0.10+1.21.1"' in toml, toml
+          print('Verified NeoForge version 1.0.10+1.21.1:', jars[0])
           PY
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: ultraterraforged-personal-1.21.1-tested
+          name: tnkterraforged-1.21.1-tested
           path: |
             neoforge/build/libs/*-neoforge.jar
             fabric/build/libs/*-fabric.jar
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ultraterraforged-personal-junit-reports
+          name: tnkterraforged-junit-reports
           path: |
             common/build/test-results/test/
             common/build/reports/tests/test/

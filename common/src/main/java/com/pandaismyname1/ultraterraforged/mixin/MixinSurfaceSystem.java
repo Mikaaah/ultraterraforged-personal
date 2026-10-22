@@ -31,6 +31,8 @@ import terrablender.worldgen.surface.NamespacedSurfaceRuleSource;
 class MixinSurfaceSystem {
 	private static final ResourceLocation STRATA_RANDOM = UTFCommon.location("strata");
 	private RandomSource strataRandom;
+    private RandomState utfSurfaceState;
+    private final Map<SurfaceRules.RuleSource, SurfaceRules.RuleSource> utfModRules = new ConcurrentHashMap<>();
 	private Map<ResourceLocation, List<StrataStack>> strata;
 	
 	@Inject(
@@ -38,6 +40,7 @@ class MixinSurfaceSystem {
 		method = "<init>"
 	)
     public void SurfaceSystem(RandomState randomState, BlockState blockState, int i, PositionalRandomFactory positionalRandomFactory, CallbackInfo callback) {
+        this.utfSurfaceState = randomState;
     	this.strataRandom = randomState.random.fromHashOf(STRATA_RANDOM);
     	this.strata = new ConcurrentHashMap<>();
 	}
@@ -51,10 +54,11 @@ class MixinSurfaceSystem {
 		argsOnly = true
 	)
 	public SurfaceRules.RuleSource buildSurface(SurfaceRules.RuleSource source) {
-		// let our own surface api handle this instead
-//		if(TBIntegration.isEnabled() && source instanceof NamespacedSurfaceRuleSource namespacedRule) {
-//			return namespacedRule.base();
-//		}	
+        if ((Object)this.utfSurfaceState instanceof com.pandaismyname1.ultraterraforged.world.worldgen.UTFRandomState utf
+                && utf.generatorContext() != null && utf.registryAccess() != null) {
+            return this.utfModRules.computeIfAbsent(source, rules ->
+                    com.pandaismyname1.ultraterraforged.world.worldgen.surface.ModSurfaceRules.wrap(rules,utf.registryAccess()));
+        }
 		return source;
 	}
 

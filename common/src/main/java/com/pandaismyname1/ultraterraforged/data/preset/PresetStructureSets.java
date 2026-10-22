@@ -32,6 +32,18 @@ public class PresetStructureSets {
 		HolderGetter<Structure> structures = ctx.lookup(Registries.STRUCTURE);
 		HolderGetter<StructureSet> structureSets = ctx.lookup(Registries.STRUCTURE_SET);
 		HolderGetter<Biome> biomes = ctx.lookup(Registries.BIOME);
+		// Independent mod structure sets can each be reasonably spaced yet pile
+		// several different structures into one small area. Spread the common
+		// random-spread sets in TNK worlds, without modifying other world types.
+		registered.listElements().forEach(holder -> {
+			ResourceLocation id = holder.key().location();
+			if ("minecraft".equals(id.getNamespace()) || preset.structures().entries.containsKey(id)) return;
+			if (!(holder.value().placement() instanceof RandomSpreadStructurePlacement spread)) return;
+			if (spread.spacing() >= 48 || spread.spacing() <= 2) return;
+			StructureSetEntry entry = new StructureSetEntry();
+			entry.spacing = spaced(spread.spacing());
+			ctx.register(holder.key(), apply(holder.value(), entry, structures, structureSets, biomes));
+		});
 
 		preset.structures().entries.forEach((id, entry) -> {
 			ResourceKey<StructureSet> key = ResourceKey.create(Registries.STRUCTURE_SET, id);
@@ -43,6 +55,10 @@ public class PresetStructureSets {
 			}
 			ctx.register(key, apply(original.get(), entry, structures, structureSets, biomes));
 		});
+	}
+
+	static int spaced(int spacing) {
+		return Math.max(spacing + 12, (int) Math.ceil(spacing * 1.5));
 	}
 
 	public static StructureSet apply(StructureSet original, StructureSetEntry entry, HolderGetter<Structure> structures, HolderGetter<StructureSet> structureSets, HolderGetter<Biome> biomes) {

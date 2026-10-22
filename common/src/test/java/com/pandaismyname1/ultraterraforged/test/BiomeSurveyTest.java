@@ -35,6 +35,44 @@ import net.minecraft.world.level.biome.OverworldBiomeBuilder;
  * shipwrecks and ocean ruins on dry ground.
  */
 public class BiomeSurveyTest {
+	@Test
+	@SuppressWarnings("unchecked")
+	void tnk3ExpanseCherryGroveSurvey() throws Exception {
+		TestBootstrap.init();
+		List<Pair<Climate.ParameterPoint, ResourceKey<Biome>>> points = new ArrayList<>();
+		Method addBiomes = OverworldBiomeBuilder.class.getDeclaredMethod("addBiomes", Consumer.class);
+		addBiomes.setAccessible(true);
+		addBiomes.invoke(new OverworldBiomeBuilder(), (Consumer<Pair<Climate.ParameterPoint, ResourceKey<Biome>>>) points::add);
+		var vanilla = new Climate.ParameterList<>(points);
+		for (String name : List.of("Balanced", "Grand")) {
+			var path = java.nio.file.Path.of("../presets/tnk3/TNKTerraForged_" + name + "_Expanse.json");
+			var preset = com.pandaismyname1.ultraterraforged.data.preset.settings.Preset.CODEC
+				.parse(com.mojang.serialization.JsonOps.INSTANCE,
+					com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(path))).getOrThrow();
+			var context = GeneratorContext.makeCached(preset, 1111, 3, 6, false);
+			int cherry = 0, meadow = 0, promoted = 0;
+			Cell cell = new Cell();
+			for (int x = -20000; x <= 20000; x += 192) {
+				for (int z = -20000; z <= 20000; z += 192) {
+					context.lookup.apply(cell.reset(), x, z);
+					if (cell.height < context.levels.ground) continue;
+					var target = Climate.target(cell.temperature, cell.moisture, cell.continentalness,
+						cell.erosion, 0.0F, cell.weirdness);
+					var biome = vanilla.findValue(target);
+					if (biome.equals(Biomes.CHERRY_GROVE)) cherry++;
+					if (biome.equals(Biomes.MEADOW)) {
+						meadow++;
+						if (com.pandaismyname1.ultraterraforged.world.worldgen.biome.BiomeExclusions
+								.promoteMeadow(cell.biomeRegionId)) promoted++;
+					}
+				}
+			}
+			System.out.printf("%s TNK3 Expanse: native cherry %d, meadow %d, added cherry %d%n",
+				name, cherry, meadow, promoted);
+			assertTrue(cherry > 0 && promoted > 0 && promoted < meadow,
+				name + " Expanse needs Cherry Groves and remaining meadows in 40,000 blocks");
+		}
+	}
 
 	@Test
 	@SuppressWarnings("unchecked")

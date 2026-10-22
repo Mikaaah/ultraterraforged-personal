@@ -28,7 +28,7 @@ import com.pandaismyname1.ultraterraforged.data.preset.settings.Preset;
  * changed preset has to get a new name to take effect.
  */
 public final class PresetApplier {
-	private static final String PACK_PREFIX = "ultraterraforged-preset";
+	private static final String PACK_PREFIX = PresetPacks.WORLD_PACK_PREFIX;
 
 	/**
 	 * @return true if the world can be created right away; false if the datapacks are being reloaded, in which case
@@ -102,7 +102,7 @@ public final class PresetApplier {
 		try (Stream<Path> files = Files.list(directory)) {
 			stale = files.filter((file) -> {
 				String name = file.getFileName().toString();
-				return name.startsWith(PACK_PREFIX) && name.endsWith(".zip") && !name.equals(keep);
+				return PresetPacks.isPresetPack("file/" + name) && !name.equals(keep);
 			}).toList();
 		}
 		for (Path file : stale) {

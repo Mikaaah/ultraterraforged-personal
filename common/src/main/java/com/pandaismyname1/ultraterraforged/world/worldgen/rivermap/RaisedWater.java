@@ -26,7 +26,12 @@ public final class RaisedWater {
 	public static void fill(ChunkAccess chunk, GeneratorContext context) {
 		ChunkPos chunkPos = chunk.getPos();
 		Tile.Chunk cells = context.cache.provideAtChunk(chunkPos.x, chunkPos.z).getChunkReader(chunkPos.x, chunkPos.z);
-		Levels levels = context.levels;
+        fill(chunk, cells, context.levels);
+    }
+
+    // Kept separate so actual block placement and fluid postprocessing can be regression-tested.
+    static void fill(ChunkAccess chunk, Tile.Chunk cells, Levels levels) {
+        ChunkPos chunkPos = chunk.getPos();
 		int[] surfaces = new int[256];
 		boolean any = false;
 		for (int dz = 0; dz < 16; dz++) {
@@ -49,6 +54,8 @@ public final class RaisedWater {
 		int bottom = chunk.getMinBuildHeight();
 		BlockState water = Blocks.WATER.defaultBlockState();
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        int[] bottoms = new int[256];
+        java.util.Arrays.fill(bottoms, NONE);
 		// the top water block of each column, or NONE
 		int[] tops = new int[256];
 		for (int i = 0; i < 256; i++) {
@@ -59,13 +66,25 @@ public final class RaisedWater {
 			}
 			int x = minX + (i & 15);
 			int z = minZ + (i >> 4);
-			for (int y = surface; y >= Math.max(bottom, surface - MAX_DEPTH); y--) {
+            // Locate a real bed before writing anything. The old top-down fill left
+            // a MAX_DEPTH-high floating source-water slab when terrain was farther below.
+            int floor = Math.max(bottom, surface - MAX_DEPTH);
+            int bed = surface;
+            while (bed >= floor) {
+                BlockState state = chunk.getBlockState(pos.set(x, bed, z));
+                if (!state.isAir() && state.getFluidState().isEmpty()) break;
+                bed--;
+            }
+            if (bed < floor) continue;
+            for (int y = bed + 1; y <= surface; y++) {
 				BlockState state = chunk.getBlockState(pos.set(x, y, z));
 				if (state.isAir()) {
 					chunk.setBlockState(pos, water, false);
+                    bottoms[i] = bottoms[i] == NONE ? y : Math.min(bottoms[i], y);
 					tops[i] = Math.max(tops[i], y);
 				} else if (state.is(Blocks.WATER)) {
                     // Pre-existing water is not an empty adjacent column.
+                    bottoms[i] = bottoms[i] == NONE ? y : Math.min(bottoms[i], y);
                     tops[i] = Math.max(tops[i], y);
 				} else if (state.getFluidState().isEmpty()) {
 					break;
@@ -80,11 +99,16 @@ public final class RaisedWater {
 			}
 			int dx = i & 15;
 			int dz = i >> 4;
-			boolean spills = dx == 0 || dz == 0 || dx == 15 || dz == 15
-				|| tops[i - 1] < top || tops[i + 1] < top || tops[i - 16] < top || tops[i + 16] < top;
-			if (spills) {
-				chunk.markPosForPostprocessing(pos.set(minX + dx, top, minZ + dz));
-			}
+            // Every exposed source on a face needs postprocessing, not just its top.
+            // Read only this chunk; edge sources are reconciled once neighbors exist.
+            for (int y = bottoms[i]; y <= top; y++) {
+                boolean exposed = dx == 0 || dz == 0 || dx == 15 || dz == 15
+                    || chunk.getBlockState(pos.set(minX + dx - 1, y, minZ + dz)).isAir()
+                    || chunk.getBlockState(pos.set(minX + dx + 1, y, minZ + dz)).isAir()
+                    || chunk.getBlockState(pos.set(minX + dx, y, minZ + dz - 1)).isAir()
+                    || chunk.getBlockState(pos.set(minX + dx, y, minZ + dz + 1)).isAir();
+                if (exposed) chunk.markPosForPostprocessing(pos.set(minX + dx, y, minZ + dz));
+            }
 		}
 	}
 }

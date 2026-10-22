@@ -2,13 +2,13 @@ package com.pandaismyname1.ultraterraforged.world.worldgen.cave;
 
 import org.jetbrains.annotations.Nullable;
 import java.util.BitSet;
-import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.StructureManager;
 import net.minecraft.core.QuartPos;
 import net.minecraft.resources.ResourceLocation;
 
@@ -47,11 +47,14 @@ public final class CaveCarving {
 	private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 	private final Cell cell = new Cell();
     private final BitSet carvedAir = new BitSet();
+    private final BitSet authoredWater = new BitSet();
+    private final BitSet protectedPillars = new BitSet();
     // Cached biome quart samples avoid repeatedly decoding holders during huge caves.
     private final Map<Long, Boolean> protectedBiomeCache = new HashMap<>();
 
-    // Structure starts known at the build-surface stage. This is a best-effort
-    // safeguard, not a replacement for modded structure-placement logic.
+    // Starts in this chunk and in neighboring chunks referenced by it. Protect
+    // individual pieces: a mineshaft's aggregate bounding box includes vast
+    // amounts of empty rock between corridors and must not block cave carving.
     private final List<BoundingBox> protectedStructures;
     private static final boolean PROTECT_STRUCTURES =
         !"false".equalsIgnoreCase(System.getProperty("tnkterraforged.structureProtection", "true"));
@@ -59,9 +62,9 @@ public final class CaveCarving {
     private boolean insideStructure(int x, int y, int z) {
         if (this.protectedStructures.isEmpty()) return false;
         for (BoundingBox bounds : this.protectedStructures) {
-            if (x >= bounds.minX() - 2 && x <= bounds.maxX() + 2
-                    && y >= bounds.minY() - 2 && y <= bounds.maxY() + 2
-                    && z >= bounds.minZ() - 2 && z <= bounds.maxZ() + 2) return true;
+            if (x >= bounds.minX() - 4 && x <= bounds.maxX() + 4
+                    && y >= bounds.minY() - 4 && y <= bounds.maxY() + 4
+                    && z >= bounds.minZ() - 4 && z <= bounds.maxZ() + 4) return true;
         }
         return false;
     }
@@ -72,7 +75,25 @@ public final class CaveCarving {
 	private int nearX = Integer.MIN_VALUE;
 	private int nearZ = Integer.MIN_VALUE;
 
-	CaveCarving(ChunkAccess chunk, GeneratorContext context) {
+    private final net.minecraft.core.RegistryAccess registries;
+    private final java.util.Set<net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome>> possibleBiomes;
+    private final Map<GiantCaverns.Cavern, CavernDecorations.Style> caverns = new java.util.LinkedHashMap<>();
+    private final Map<Long, net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome>> cavernBiomes = new HashMap<>();
+
+    CaveCarving(ChunkAccess chunk, GeneratorContext context) {
+        this(chunk, context, null, null, null);
+    }
+
+    CaveCarving(ChunkAccess chunk, GeneratorContext context, net.minecraft.core.RegistryAccess registries,
+            java.util.Set<net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome>> possibleBiomes) {
+        this(chunk, context, registries, possibleBiomes, null);
+    }
+
+    CaveCarving(ChunkAccess chunk, GeneratorContext context, net.minecraft.core.RegistryAccess registries,
+            java.util.Set<net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome>> possibleBiomes,
+            StructureManager structures) {
+        this.possibleBiomes = possibleBiomes;
+        this.registries = registries;
 		this.chunk = chunk;
 		this.context = context;
 		this.levels = context.levels;
@@ -82,13 +103,20 @@ public final class CaveCarving {
 		this.minX = chunkPos.getMinBlockX();
 		this.minZ = chunkPos.getMinBlockZ();
 		this.bottom = chunk.getMinBuildHeight();
-        // Generic, mod-independent support for structure starts already
-        // recorded on this chunk (Integrated, YUNG, Cataclysm, vanilla, etc).
-        this.protectedStructures = PROTECT_STRUCTURES ? chunk.getAllStarts().values().stream()
+        // Structure references are complete by SURFACE. Resolve neighboring
+        // starts through the worldgen region so a jigsaw that began next door
+        // protects its pieces here as well. Avoid the lookup for empty refs.
+        java.util.stream.Stream<StructureStart> starts = chunk.getAllStarts().values().stream();
+        if (PROTECT_STRUCTURES && structures != null && !chunk.getAllReferences().isEmpty()) {
+            starts = java.util.stream.Stream.concat(starts,
+                    structures.startsForStructure(chunkPos, structure -> true).stream());
+        }
+        this.protectedStructures = PROTECT_STRUCTURES ? starts
             .filter(StructureStart::isValid)
-            .map(StructureStart::getBoundingBox)
-            .filter(b -> b.maxX() >= this.minX - 2 && b.minX() <= this.minX + 17
-                      && b.maxZ() >= this.minZ - 2 && b.minZ() <= this.minZ + 17)
+            .flatMap(start -> start.getPieces().stream().map(StructurePiece::getBoundingBox))
+            .filter(b -> b.maxX() >= this.minX - 4 && b.minX() <= this.minX + 19
+                      && b.maxZ() >= this.minZ - 4 && b.minZ() <= this.minZ + 19)
+            .distinct()
             .toList() : List.of();
 		for (int dz = 0; dz < 16; dz++) {
 			for (int dx = 0; dx < 16; dx++) {
@@ -148,6 +176,12 @@ public final class CaveCarving {
 	 * is the ground within roof blocks of the surface, unless roof is OPEN.
 	 */
 	public void hollow(float cx, float cy, float cz, float rx, float ry, float rz, int water, int roof) {
+        this.hollow(cx, cy, cz, rx, ry, rz, water, roof, null);
+    }
+
+    // Large connections use the same world-coordinate wall noise in every chunk.
+    void hollow(float cx, float cy, float cz, float rx, float ry, float rz, int water, int roof,
+            com.pandaismyname1.ultraterraforged.world.worldgen.noise.module.Noise walls) {
 		int x0 = Math.max(this.minX, (int) Math.floor(cx - rx));
 		int x1 = Math.min(this.minX + 15, (int) Math.ceil(cx + rx));
 		int z0 = Math.max(this.minZ, (int) Math.floor(cz - rz));
@@ -168,7 +202,12 @@ public final class CaveCarving {
 				int top = roof == OPEN ? y1 : Math.min(y1, this.ground[(z - this.minZ) << 4 | (x - this.minX)] - roof);
 				for (int y = y0; y <= top; y++) {
 					float ny = (y + 0.5F - cy) / ry;
-					if (flat + ny * ny >= 1.0F) {
+                    float shape = flat + ny * ny;
+                    // Only erode into the nominal cross-section, preserving the
+                    // conservative corridor bounds and the surface roof guard.
+                    float roughness = walls == null ? 0.0F
+                            : 0.28F * walls.compute(x + y * 0.7F, z - y * 0.7F, 0);
+					if (shape + roughness >= 1.0F) {
 						continue;
 					}
 					this.clear(x, y, z, water);
@@ -180,17 +219,30 @@ public final class CaveCarving {
 	/**
 	 * Hollows out a single block, as hollow does.
 	 */
+    void protectPillar(int x,int y,int z) {
+        this.protectedPillars.set(((y-this.bottom)<<8)|((z-this.minZ)<<4)|(x-this.minX));
+    }
+
 	public void clear(int x, int y, int z, int water) {
-        if (this.insideStructure(x, y, z) || this.isAlexCavesBiome(x, y, z)) return;
+        if (y >= this.bottom && this.contains(x,z) && this.protectedPillars.get(
+                ((y-this.bottom)<<8)|((z-this.minZ)<<4)|(x-this.minX))) return;
+        if (this.insideStructure(x, y, z) || this.isProtectedCaveBiome(x, y, z)) return;
 		this.pos.set(x, y, z);
 		BlockState state = this.chunk.getBlockState(this.pos);
-		if (state.is(Blocks.BEDROCK) || !state.getFluidState().isEmpty()) {
+		int bit = ((y - this.bottom) << 8) | ((z - this.minZ) << 4) | (x - this.minX);
+		if (state.is(Blocks.BEDROCK) || (!state.getFluidState().isEmpty()
+                && !(water == DRY && this.authoredWater.get(bit)))) {
 			return;
 		}
 		BlockState fill = y <= water ? WATER : AIR;
+		// Another cave may already be open here. Filling that air makes a
+		// free-standing ellipsoid of water in the middle of a large chamber.
+		if (fill == WATER && state.isAir()) return;
 		if (state != fill) {
+            if (fill == WATER) this.authoredWater.set(bit);
+            else this.authoredWater.clear(bit);
             if (fill == AIR && !state.isAir() && y >= this.bottom && y < this.chunk.getMaxBuildHeight()) {
-                this.carvedAir.set(((y - this.bottom) << 8) | ((z - this.minZ) << 4) | (x - this.minX));
+                this.carvedAir.set(bit);
             }
             this.chunk.setBlockState(this.pos, fill, false);
         }
@@ -228,7 +280,7 @@ public final class CaveCarving {
 					if (state.isAir() || state.is(Blocks.BEDROCK) || !state.getFluidState().isEmpty()) {
 						continue;
 					}
-					if (!this.insideStructure(x, y, z) && !this.isAlexCavesBiome(x, y, z)) this.chunk.setBlockState(this.pos, lining.at(x, y, z), false);
+					if (!this.insideStructure(x, y, z) && !this.isProtectedCaveBiome(x, y, z)) this.chunk.setBlockState(this.pos, lining.at(x, y, z), false);
 				}
 			}
 		}
@@ -246,7 +298,7 @@ public final class CaveCarving {
 	}
 
 	public void set(int x, int y, int z, BlockState state) {
-        if (this.insideStructure(x, y, z) || this.isAlexCavesBiome(x, y, z)) return;
+        if (this.insideStructure(x, y, z) || this.isProtectedCaveBiome(x, y, z)) return;
 		this.chunk.setBlockState(this.pos.set(x, y, z), state, false);
 	}
 
@@ -257,11 +309,10 @@ public final class CaveCarving {
 
 
     /**
-     * Optional native protection for Alex's Caves biomes. Requires no hard
-     * dependency or class loading from Alex's Caves, on either loader.
+     * Preserve native cave volumes and their own worldgen features without
+     * linking either optional mod into TNK's runtime.
      */
-    private boolean isAlexCavesBiome(int x, int y, int z) {
-        // No Alex biomes are present unless the optional mod is installed.
+    private boolean isProtectedCaveBiome(int x, int y, int z) {
         int qx=QuartPos.fromBlock(x), qy=QuartPos.fromBlock(y), qz=QuartPos.fromBlock(z);
         long key = net.minecraft.core.BlockPos.asLong(qx, qy, qz);
         Boolean cached = this.protectedBiomeCache.get(key);
@@ -269,68 +320,90 @@ public final class CaveCarving {
         var biomeHolder = this.chunk.getNoiseBiome(qx, qy, qz);
         // Synthetic test chunks and unfinished worldgen may return no holder.
         boolean protectedBiome = biomeHolder != null && biomeHolder.unwrapKey()
-            .map(biome -> "alexscaves".equals(biome.location().getNamespace())).orElse(false);
+            .map(biome -> {
+                String namespace = biome.location().getNamespace();
+                return "alexscaves".equals(namespace) || "yungscavebiomes".equals(namespace);
+            }).orElse(false);
         this.protectedBiomeCache.put(key, protectedBiome);
         return protectedBiome;
     }
 
-    /** Reconcile newly carved air connected to water sources at buildSurface.
-     * Disconnected dry cave systems stay dry. Flood cannot rise above the
-     * adjacent source water block. Chunk edges are marked for fluid processing.
+    boolean canDecorate(int x,int y,int z) {
+        return !this.insideStructure(x,y,z) && !this.isProtectedCaveBiome(x,y,z);
+    }
+
+    void addCavern(GiantCaverns.Cavern cavern, CavernDecorations.Style style) {
+        this.caverns.put(cavern, style);
+    }
+
+    void paintCavernBiome(int x, int y, int z, net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome> key) {
+        if (this.registries == null || this.insideStructure(x,y,z) || this.isProtectedCaveBiome(x,y,z)) return;
+        var holder = this.registries.registryOrThrow(net.minecraft.core.registries.Registries.BIOME).getHolder(key);
+        holder.filter(value -> this.possibleBiomes == null || this.possibleBiomes.contains(value))
+                .ifPresent(value -> this.cavernBiomes.put(BlockPos.asLong(x>>2,y>>2,z>>2),value));
+    }
+
+    void decorateCaverns() {
+        this.caverns.forEach((cavern, style) -> CavernDecorations.decorate(this,cavern,style));
+        if (!this.cavernBiomes.isEmpty()) {
+            this.chunk.fillBiomesFromNoise((qx,qy,qz,sampler) -> this.cavernBiomes.getOrDefault(
+                    BlockPos.asLong(qx,qy,qz), this.chunk.getNoiseBiome(qx,qy,qz)), null);
+        }
+    }
+
+    /** Close only isolated one-block pocks made by our carvers, retaining larger cave openings. */
+    public void repairSingleBlockHoles() {
+        java.util.Map<BlockPos, BlockState> repairs = new java.util.HashMap<>();
+        for (int bit = this.carvedAir.nextSetBit(0); bit >= 0; bit = this.carvedAir.nextSetBit(bit + 1)) {
+            int x = this.minX + (bit & 15), z = this.minZ + ((bit >>> 4) & 15);
+            int y = this.bottom + (bit >>> 8);
+            if (x <= this.minX || x >= this.minX + 15 || z <= this.minZ || z >= this.minZ + 15
+                    || y <= this.bottom || y >= this.chunk.getMaxBuildHeight() - 1) continue;
+            if (!this.chunk.getBlockState(this.pos.set(x,y,z)).isAir()) continue;
+            int rock = 0, air = 0;
+            BlockState replacement = null;
+            for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
+                BlockState next = this.chunk.getBlockState(this.pos.set(x + direction.getStepX(), y + direction.getStepY(), z + direction.getStepZ()));
+                if (next.is(Blocks.STONE) || next.is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD)) {
+                    rock++;
+                    replacement = next;
+                } else if (next.isAir()) air++;
+            }
+            if (rock >= 5 && rock + air == 6) repairs.put(new BlockPos(x,y,z), replacement);
+        }
+        repairs.forEach((position, state) -> this.chunk.setBlockState(position, state, false));
+    }
+
+    /**
+     * Wake existing water exposed by carving. Never manufacture source blocks:
+     * a spring opening onto a slope must flow down it, not flood every connected
+     * air block up to its height (including open sky within this chunk).
+     * Authored sea caves and cavern lakes already supply their own waterline.
      */
     public void reconcileWater() {
-        if (this.carvedAir.isEmpty()) return;
-        // Short offsets are safe for supported Minecraft world heights.
-        // Most giant-cave chunks have no exposed fluid connection.
-        // Build the seed queue before allocating a per-block water-height table.
-        LongArrayFIFOQueue pending = new LongArrayFIFOQueue();
-        for (int bit=this.carvedAir.nextSetBit(0); bit>=0; bit=this.carvedAir.nextSetBit(bit+1)) {
-            int x=this.minX+(bit&15), z=this.minZ+((bit>>>4)&15), y=this.bottom+(bit>>>8);
-            int ceiling = Integer.MIN_VALUE;
-            if (y+1 < this.chunk.getMaxBuildHeight() && this.isWater(x,y+1,z)) ceiling=y+1;
-            if (x>this.minX && this.isWater(x-1,y,z)) ceiling=Math.max(ceiling,y);
-            if (x<this.minX+15 && this.isWater(x+1,y,z)) ceiling=Math.max(ceiling,y);
-            if (z>this.minZ && this.isWater(x,y,z-1)) ceiling=Math.max(ceiling,y);
-            if (z<this.minZ+15 && this.isWater(x,y,z+1)) ceiling=Math.max(ceiling,y);
-            if (ceiling>=y) pending.enqueue(packWater(bit,ceiling));
-        }
-        if (pending.isEmpty()) return;
-        int len = (this.chunk.getMaxBuildHeight() - this.bottom) << 8;
-        short[] highestWater = new short[len];
-        Arrays.fill(highestWater, (short) -1);
-        BitSet filled = new BitSet();
-        while(!pending.isEmpty()) {
-            long candidate=pending.dequeueLong();
-            int bit=(int)candidate, ceiling=(int)(candidate>>>32);
-            if(bit<0 || bit>=len || highestWater[bit]>=ceiling-this.bottom) continue;
-            int x=this.minX+(bit&15), z=this.minZ+((bit>>>4)&15), y=this.bottom+(bit>>>8);
-            if(y>ceiling || this.insideStructure(x,y,z) || this.isAlexCavesBiome(x,y,z)) continue;
-            BlockState state=this.chunk.getBlockState(this.pos.set(x,y,z));
-            if(!state.isAir() && !filled.get(bit)) continue;
-            highestWater[bit]=(short)(ceiling-this.bottom);
-            if(state.isAir()) {
-                this.chunk.setBlockState(this.pos, WATER, false);
-                filled.set(bit);
-                if(x==this.minX || x==this.minX+15 || z==this.minZ || z==this.minZ+15) {
-                    this.chunk.markPosForPostprocessing(this.pos);
-                }
-            }
-            if((bit&15)>0) pending.enqueue(packWater(bit-1,ceiling));
-            if((bit&15)<15) pending.enqueue(packWater(bit+1,ceiling));
-            if(((bit>>>4)&15)>0) pending.enqueue(packWater(bit-16,ceiling));
-            if(((bit>>>4)&15)<15) pending.enqueue(packWater(bit+16,ceiling));
-            if(y>this.bottom) pending.enqueue(packWater(bit-256,ceiling));
-            if(y<ceiling && y+1<this.chunk.getMaxBuildHeight()) pending.enqueue(packWater(bit+256,ceiling));
+        BitSet scheduled = new BitSet();
+        for (int bit = this.carvedAir.nextSetBit(0); bit >= 0; bit = this.carvedAir.nextSetBit(bit + 1)) {
+            int x = this.minX + (bit & 15);
+            int z = this.minZ + ((bit >>> 4) & 15);
+            int y = this.bottom + (bit >>> 8);
+            this.scheduleWater(x, y + 1, z, scheduled);
+            this.scheduleWater(x - 1, y, z, scheduled);
+            this.scheduleWater(x + 1, y, z, scheduled);
+            this.scheduleWater(x, y, z - 1, scheduled);
+            this.scheduleWater(x, y, z + 1, scheduled);
         }
     }
 
-    private static long packWater(int bit, int ceiling) {
-        return ((long)ceiling<<32) | (bit & 0xFFFFFFFFL);
-    }
-
-    private boolean isWater(int x,int y,int z) {
-        return this.chunk.getBlockState(this.pos.set(x,y,z)).getFluidState()
-            .is(net.minecraft.tags.FluidTags.WATER);
+    private void scheduleWater(int x, int y, int z, BitSet scheduled) {
+        // Never read or mutate a neighboring generation chunk.
+        if (!this.contains(x, z) || y < this.bottom || y >= this.chunk.getMaxBuildHeight()) return;
+        int bit = ((y - this.bottom) << 8) | ((z - this.minZ) << 4) | (x - this.minX);
+        if (scheduled.get(bit)) return;
+        BlockState state = this.chunk.getBlockState(this.pos.set(x, y, z));
+        if (state.is(Blocks.WATER) || state.getFluidState().is(net.minecraft.tags.FluidTags.WATER)) {
+            scheduled.set(bit);
+            this.chunk.markPosForPostprocessing(this.pos);
+        }
     }
 
 	/**

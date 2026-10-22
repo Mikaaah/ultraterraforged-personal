@@ -45,7 +45,7 @@ dependencies {
 ```
 
 - **Mixin configs** are declared in `neoforge.mods.toml` (`[[mixins]] config=...`). Loom's `forge { mixinConfig ... }` has no NeoForge equivalent.
-- **Access widener → access transformer.** NeoForge reads `META-INF/accesstransformer.cfg` with Mojang names. There is no `forge { convertAccessWideners }` for NeoForge. On 1.21.1 (remapping Loom), use either `remapJar { atAccessWideners.add("ultraterraforged.accesswidener") }` or the experimental `loom.neoForge.convertAccessWideners(tasks.remapJar, "ultraterraforged.accesswidener")`. **From 26.1 (loom-no-remap) the automatic conversion is broken** ([architectury-loom#337](https://github.com/architectury/architectury-loom/issues/337)), so ship a hand-written `accesstransformer.cfg` next to the widener. That's what EMI does on every 26.x branch. Generate it from the widener with a small Gradle task instead of maintaining two files by hand: the formats map 1:1 (`accessible field a/B c` → `public a.B c`, and so on).
+- **Access widener → access transformer.** NeoForge reads `META-INF/accesstransformer.cfg` with Mojang names. There is no `forge { convertAccessWideners }` for NeoForge. On 1.21.1 (remapping Loom), use either `remapJar { atAccessWideners.add("tnkterraforged.accesswidener") }` or the experimental `loom.neoForge.convertAccessWideners(tasks.remapJar, "tnkterraforged.accesswidener")`. **From 26.1 (loom-no-remap) the automatic conversion is broken** ([architectury-loom#337](https://github.com/architectury/architectury-loom/issues/337)), so ship a hand-written `accesstransformer.cfg` next to the widener. That's what EMI does on every 26.x branch. Generate it from the widener with a small Gradle task instead of maintaining two files by hand: the formats map 1:1 (`accessible field a/B c` → `public a.B c`, and so on).
 - **Datagen:** Loom's `forge { dataGen { mod ... } }` has no NeoForge shortcut. Define a `data` run (`runs { data { data(); programArgs "--mod", "ultraterraforged", "--all", "--output", file("src/generated/resources").absolutePath } }`) and check the argument names against the 21.1 `DataMain`. Remember that UTF's datagen JVM never exits by itself (see the dev notes).
 - **Dev runs:** EMI found that client-only dev mods break `neoforge:runServer`. Keep the NeoForge run classpath minimal.
 
@@ -66,9 +66,9 @@ credits="..."                   # as in today's mods.toml
 description='''...'''
 
 [[mixins]]
-config="ultraterraforged-common.mixins.json"
+config="tnkterraforged-common.mixins.json"
 [[mixins]]
-config="ultraterraforged-neoforge.mixins.json"
+config="tnkterraforged-neoforge.mixins.json"
 
 [[dependencies.ultraterraforged]]
 modId="neoforge"

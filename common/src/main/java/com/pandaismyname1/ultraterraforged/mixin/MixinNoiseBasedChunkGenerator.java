@@ -63,9 +63,23 @@ class MixinNoiseBasedChunkGenerator {
         try {
             RaisedWater.fill(chunk, context);
             original.call(region, structures, randomState, chunk);
-            context.caveFeatures.carve(chunk);
+            context.caveFeatures.carve(chunk, region.registryAccess(),
+                    ((NoiseBasedChunkGenerator)(Object)this).getBiomeSource().possibleBiomes(), structures);
         } finally {
             SurfaceRegion.set(null);
+        }
+    }
+
+    // Ceiling fittings and cave biomes belong after vanilla carvers, otherwise
+    // a later cut can remove the anchor above a hanging chain or vine.
+    @Inject(method="applyCarvers", at=@At("TAIL"))
+    private void ultraterraforged$decorateCaverns(WorldGenRegion region,long seed,RandomState randomState,
+            net.minecraft.world.level.biome.BiomeManager biomeManager,StructureManager structures,
+            ChunkAccess chunk,net.minecraft.world.level.levelgen.GenerationStep.Carving step,CallbackInfo callback) {
+        if (step != net.minecraft.world.level.levelgen.GenerationStep.Carving.AIR) return;
+        if ((Object)randomState instanceof UTFRandomState utf && utf.generatorContext()!=null) {
+            utf.generatorContext().caveFeatures.decorate(chunk,region.registryAccess(),
+                    ((NoiseBasedChunkGenerator)(Object)this).getBiomeSource().possibleBiomes(), structures);
         }
     }
 

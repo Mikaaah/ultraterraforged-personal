@@ -1,5 +1,71 @@
 # TNKTerraForged — development changelog
 
+## 1.0.10+1.21.1 — Cave structures, water and island profile
+
+- Protect individual underground structure pieces instead of the encompassing start bounding box, so mineshafts do not leave giant rectangular areas of solid terrain inside caverns.
+- Avoid filling already open cave air with water from later cave pools. Allow later dry caves to remove water placed by an earlier TNK cave within the same chunk while retaining naturally generated fluids.
+- Lower mushroom islands and blend a long shore slope from the ocean floor without a high flat top.
+- Spread closely placed third-party random-spread structure sets in TNK worlds while respecting explicit preset overrides and preserving vanilla and already rare sets. Custom placement types retain their own placement logic.
+
+## 1.0.9+1.21.1 — Biome selection and Cherry Groves
+
+- Copy the TNK3 exclusion policy into cached chunk climate samplers, closing the path that could generate RU Gravel Beach or BOP Wasteland in new chunks despite the global biome-source filter.
+- Promote part of suitable vanilla Meadow regions to Cherry Grove, using stable per-region values from the TNK climate map. Keep the remaining meadows and modded biomes.
+- Survey both TNK3 Expanse presets across a 40,000-block square and check the promoted groves and retained meadows.
+
+## 1.0.8+1.21.1 — Structure and cave-biome compatibility
+
+- Protect structure pieces referenced from neighboring chunks during custom cave carving, lining and decorations, including large jigsaw structures from the supplied Integrated, YUNG and ATi families.
+- Preserve YUNG's Frosted and Lost Cave biomes and their blocks when custom caverns overlap them, alongside existing Alex's Caves protection.
+- Increase the protection margin around structure bounding boxes to four blocks. Feature-based bridges remain owned by YUNG's own placement stage.
+
+## 1.0.7+1.21.1 — Biome-aware caverns and mod surfaces
+
+- Restore rare Mushroom Fields islands in deep ocean with terrain above sea level and the matching vanilla biome, and give Stony Shore actual elevated rocky terrain rather than a flat sea-level strip.
+- Stop river channels from cutting/tagging existing submerged ocean floors. Remove artificial underground water tunnels, including saved presets, and omit their retired UI controls.
+- Replace extruded cavern columns with seeded, curved and tapered rock supports. Protect their foundations from later custom connections; reuse per-height cross-sections during carving.
+- Give huge chambers coherent lush, dripstone and lantern styles. Apply matching vanilla cave biomes only when available in the biome source; preserve Alex's Caves and known structures. Place anchored fittings after vanilla carvers.
+- Add rare giant coastal coves with flooded sea entrances, navigable headroom and guarded cliff roofs. Controlled by the existing sea-cave setting.
+- Import optional native mod surface rules while preserving TNK fallback surfaces. Adapt Nature's Spirit's preliminary-height tests to actual terrain, retaining native materials and giving ordinary fields (including Cypress Fields) grass/dirt ground cover.
+- Exclude `regions_unexplored:dry_bushland` and `biomesoplenty:wasteland`; keep BOP Grassland. Total exclusions: 24.
+- Update both Expanse presets and add targeted geometry, attachment, biome-palette, native surface and cove regression tests plus an optional exact-JAR Nature's Spirit server smoke test.
+
+## 1.0.6+1.21.1 — Coastal beds and connected rivers
+
+- Replace the constant sea-surface coastal bed with shallow, seeded relief. Classify dry shoreline as coast/inland and submerged land tags as marine climate.
+- Survey canyon cuts before choosing river routes and water levels. Retain original ground at intersecting river banks, within the existing two-block fill budget; preserve real water joins.
+- Remove the per-column water suppression that could interrupt connected rivers. Allow bounded rapids on steep natural banks instead of excessively flattening their approaches.
+- Process every tile cell once in the final biome pass, including borders at negative coordinates.
+- Disable vanilla and custom water springs even for older enabled presets. Fill isolated one-cell surface pools while retaining diagonal stream connections.
+- Close isolated single-block rock pocks made by custom cave carvers; preserve larger openings, structures and other mods' protected caves.
+- Update both Expanse presets. See `docs/TNK_TERRAIN_WATER_1.0.6.md` for installation and verification scope.
+
+## 1.0.5+1.21.1 — Terrain and water safety
+
+- Stop cave reconciliation from flooding outdoor air with synthetic source blocks; schedule exposed water to flow instead.
+- Cap artificial river embankments and rim repairs at two blocks, and constrain raised water against finished terrain.
+- Replace the flat shallow-ocean base with seed-dependent relief; add shelf texture and soften shelf drop-offs.
+- Give giant cavern connections varying, rough cross-sections while retaining roof guards and clipping bounds.
+- Add revised Balanced/Grand Expanse presets and regression coverage. See `docs/TNK_TERRAIN_WATER_1.0.5.md` for installation and verification limits.
+
+## 1.0.4+1.21.1 — TNK3 biome exclusions
+
+- Exclude the agreed 16 Biomes O' Plenty and 6 Regions Unexplored biomes from newly generated TNKTerraForged terrain. Keep BOP Grassland.
+- Replace excluded selections with an allowed vanilla biome at the same climate point, using a per-world search tree built once. No neighboring-chunk searches or extra terrain generation.
+- Keep biome registrations, blocks, items and existing chunks. Other world generators and dimensions without TNK terrain cells remain unaffected.
+- Include both the 1.0.3 water/cache/path fixes and the newer main-branch cavern/current performance changes.
+- See `docs/TNK3_BIOME_EXCLUSIONS.md` for exact IDs and scope.
+
+## 1.0.3+1.21.1 — River water, current-query performance and configuration cleanup
+
+- Bound steep downstream mouth transitions even when the preferred gorge depth cannot meet the parent river. Preserve existing rising terrain profiles so smoothing does not introduce unnecessarily deep trenches.
+- Require a real riverbed within the raised-water fill depth before writing source blocks; avoid unsupported floating slabs.
+- Postprocess every exposed water block on a column face instead of only the top; skip enclosed pool faces and never read neighboring chunks during this pass.
+- Keep the selecting river and route position in terrain cells, including cell copies and resets. Current layers reuse completed terrain tiles for their center and slope probes, falling back to pure queries without waiting for missing tiles. Retain compact river snapshots for up to 2,048 chunks so tile-pool retirement does not restore the repeated queries; dry chunks are cached too. Remove the old observer Mixin and its per-query allocations.
+- Consolidate active configuration under `config/tnkterraforged/`, including optional Streams and Alex's Caves settings. Import missing legacy files without overwriting current settings or deleting originals.
+- Rename project, access widener and Mixin resource files; move integrated current code to `nl.townsandkingdoms.terraforged.compat.streams`. Use TNK names for generated preset packs and language-provider labels, while continuing to recognize existing world packs. Retain upstream API packages and world registry IDs deliberately for compatibility.
+- Add block-placement, steep-transition, config-import and cached-river identity regressions, plus an opt-in raw/cached query benchmark.
+
 ## 2026-10-20 — Large-cavern worldgen performance follow-up
 
 - Optimize giant-cavern corridor iteration by projecting each chunk onto the path and visiting only potentially intersecting corridor segments. Path positions, curve sway, radius, roof clearance and generated block shapes are unchanged.

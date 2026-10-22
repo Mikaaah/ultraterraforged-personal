@@ -33,7 +33,7 @@ import com.pandaismyname1.ultraterraforged.world.worldgen.surface.rule.UTFSurfac
 public class UTFCommon {
 	public static final String MOD_ID = "ultraterraforged";
 	public static final String LEGACY_MOD_ID = "terraforged";
-	public static final Logger LOGGER = LogManager.getLogger("UltraTerraForged");
+	public static final Logger LOGGER = LogManager.getLogger("TNKTerraForged");
 
 	public static void bootstrap() {
 		UTFBuiltInRegistries.bootstrap();

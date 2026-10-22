@@ -1,3 +1,15 @@
+### TNKTerraForged 1.0.3 — 2026-10-20
+* Prevent unsupported raised-water slabs and process the full exposed water face.
+* Smooth steep river-mouth drops instead of keeping a large fall to satisfy the preferred gorge depth.
+* Reuse bounded native-river snapshots for Streams currents after terrain tiles are recycled.
+* Consolidate configuration in `config/tnkterraforged/`, with automatic import of existing settings.
+* Rename project/build resources and organize the integrated Streams code under the TNKTerraForged package.
+* Preserve world registry IDs and upstream API packages for compatibility. See [development notes](CHANGELOG-PERSONAL.md).
+
+---
+
+## Upstream changelog
+
 ### New in 1.0.2
 * Far less memory used while chunks generate, above all with Distant Horizons: every chunk waiting to be generated kept a whole stretch of UltraTerraForged's terrain in memory, about 4 MB, long after it was done with it. With thousands of them waiting, memory filled up and the game slowed to a crawl.
 * Rivers no longer run along walls above the land, and water no longer stands high above dry ground near rivers' sources. Rivers and lakes now take their water level from the land where they actually lie, so rivers sit a few blocks lower than before.

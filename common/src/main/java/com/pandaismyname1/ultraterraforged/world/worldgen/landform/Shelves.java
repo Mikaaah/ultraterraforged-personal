@@ -20,7 +20,7 @@ public record Shelves(float shoreline, float width, Noise wobble, Levels levels)
 	private static final float SHORE_DEPTH = 2.0F;
 	private static final float EDGE_DEPTH = 13.0F;
 	// the drop-off takes up this much of the continent values past the shelf's edge
-	private static final float DROP = 0.02F;
+	private static final float DROP = 0.04F;
 	private static final float WIDTH = 0.17F;
 
 	public static Shelves make(int seed, OceanSettings.Shelves settings, float shoreline, Levels levels) {
@@ -38,7 +38,10 @@ public record Shelves(float shoreline, float width, Noise wobble, Levels levels)
 		}
 		float out = NoiseUtil.clamp((this.shoreline - cell.continentEdge) / (this.shoreline - edge), 0.0F, 1.0F);
 		float depth = NoiseUtil.lerp(SHORE_DEPTH, EDGE_DEPTH, (float) Math.pow(out, 0.8F));
-		float shelf = this.levels.water - depth * this.levels.unit;
+		// Preserve small-scale relief across the broad shelf, not just at its edge.
+        depth += (this.wobble.compute(x * 4.3F + 1700, z * 4.3F - 1100, 0) - 0.5F) * 4.0F;
+        depth = Math.max(SHORE_DEPTH, depth);
+        float shelf = this.levels.water - depth * this.levels.unit;
 		// the drop-off
 		float mask = Landform.smoothstep(cell.continentEdge, edge - DROP, edge);
 		float height = NoiseUtil.lerp(cell.height, shelf, mask);

@@ -20,10 +20,10 @@ public class UTFLanguageProvider {
 
 		@Override
 		protected void addTranslations() {
-			this.add(UTFTranslationKeys.METADATA_DESCRIPTION, "UltraTerraForged resources");
-			this.add(UTFTranslationKeys.PRESET_METADATA_DESCRIPTION, "UltraTerraForged preset");
+			this.add(UTFTranslationKeys.METADATA_DESCRIPTION, "TNKTerraForged resources");
+			this.add(UTFTranslationKeys.PRESET_METADATA_DESCRIPTION, "TNKTerraForged preset");
 			// display name of the world type, vanilla looks it up as generator.<namespace>.<path>
-			this.add("generator.ultraterraforged.ultraterraforged", "UltraTerraForged");
+			this.add("generator.ultraterraforged.ultraterraforged", "TNKTerraForged");
 			this.add(UTFTranslationKeys.MUD_SWAMPS_METADATA_DESCRIPTION, "Changes the swamp material to mud");
 			this.add(UTFTranslationKeys.NO_ERROR_MESSAGE, "{No error message}");
 			
@@ -31,7 +31,7 @@ public class UTFLanguageProvider {
 			
 			this.add(UTFTranslationKeys.GUI_SELECT_PRESET_MISSING_LEGACY_PRESETS, "Couldn't find any legacy presets");
 			this.add(UTFTranslationKeys.GUI_SELECT_PRESET_TITLE, "Presets & Defaults");
-			this.add(UTFTranslationKeys.GUI_DEFAULT_PRESET_NAME, "UltraTerraForged - Default");
+			this.add(UTFTranslationKeys.GUI_DEFAULT_PRESET_NAME, "TNKTerraForged - Default");
 			this.add(UTFTranslationKeys.GUI_DEFAULT_LEGACY_PRESET_NAME, "TerraForged - Default");
 			this.add(UTFTranslationKeys.GUI_BEAUTIFUL_PRESET_NAME, "TerraForged - Beautiful");
 			this.add(UTFTranslationKeys.GUI_HUGE_BIOMES_PRESET_NAME, "TerraForged - Huge Biomes");
@@ -502,8 +502,8 @@ public class UTFLanguageProvider {
 			this.add(UTFTranslationKeys.OPTION_TAG_HEAVY_PERFORMANCE_IMPACT, "Heavy performance impact");
 			this.add(UTFTranslationKeys.GUI_RESET_TO_DEFAULT, "Ctrl+click to reset to %s");
 			this.add(UTFTranslationKeys.GUI_TERRAIN_TAB_TITLE, "Terrain");
-			this.add(UTFTranslationKeys.GUI_TERRAIN_TAB_ACTIVE, "World type: UltraTerraForged");
-			this.add(UTFTranslationKeys.GUI_TERRAIN_TAB_INACTIVE, "Change any setting to use UltraTerraForged");
+			this.add(UTFTranslationKeys.GUI_TERRAIN_TAB_ACTIVE, "World type: TNKTerraForged");
+			this.add(UTFTranslationKeys.GUI_TERRAIN_TAB_INACTIVE, "Change any setting to use TNKTerraForged");
 			this.add(UTFTranslationKeys.GUI_TERRAIN_TAB_PRESET, "Preset");
 			this.add(UTFTranslationKeys.GUI_TERRAIN_TAB_PRESET_TOOLTIP, "Click for the next preset, shift+click for the previous one. Presets saved in the advanced settings are listed too.");
 			this.add(UTFTranslationKeys.GUI_TERRAIN_TAB_MODIFIED, "*");
@@ -520,7 +520,7 @@ public class UTFLanguageProvider {
 			this.add(UTFTranslationKeys.GUI_PERFORMANCE_MODS_LIGHT_ORANGE, "No mod that speeds up world generation is installed, so new land will generate slower than it could.");
 			this.add(UTFTranslationKeys.GUI_PERFORMANCE_MODS_LIGHT_YELLOW, "Some of the recommended performance mods are installed.");
 			this.add(UTFTranslationKeys.GUI_PERFORMANCE_MODS_LIGHT_GREEN, "Every recommended performance mod available for this version is installed.");
-			this.add(UTFTranslationKeys.GUI_PERFORMANCE_MODS_HELP, "Mods that make UltraTerraForged worlds faster to generate and play. Click one to open its page.");
+			this.add(UTFTranslationKeys.GUI_PERFORMANCE_MODS_HELP, "Mods that make TNKTerraForged worlds faster to generate and play. Click one to open its page.");
 			this.add(UTFTranslationKeys.GUI_PERFORMANCE_MODS_INSTALLED, "Installed");
 			this.add(UTFTranslationKeys.GUI_PERFORMANCE_MODS_MISSING, "Not installed");
 			this.add(UTFTranslationKeys.GUI_PERFORMANCE_MODS_OPTIONAL, "Optional");
@@ -537,7 +537,7 @@ public class UTFLanguageProvider {
 			this.add(UTFTranslationKeys.performanceModCategory("general"), "Speeds up the game and saves memory");
 			this.add(UTFTranslationKeys.performanceModCategory("client"), "Speeds up rendering");
 			this.add(UTFTranslationKeys.performanceModDescription("c2me"), "Generates, loads and saves chunks on many threads at once: the biggest speed-up for exploring new land.");
-			this.add(UTFTranslationKeys.performanceModDescription("c2meOpenCl"), "An add-on for C2ME that moves parts of world generation onto the graphics card. It can't speed up UltraTerraForged's worlds, which generate without it, only vanilla ones. Optional: it needs Java 25 and a graphics card with OpenCL, and doesn't work together with Noisium(ed), so install one or the other.");
+			this.add(UTFTranslationKeys.performanceModDescription("c2meOpenCl"), "An add-on for C2ME that moves parts of world generation onto the graphics card. It can't speed up TNKTerraForged's worlds, which generate without it, only vanilla ones. Optional: it needs Java 25 and a graphics card with OpenCL, and doesn't work together with Noisium(ed), so install one or the other.");
 			this.add(UTFTranslationKeys.performanceModDescription("noisium"), "Fills new chunks with blocks faster, without changing the terrain. Noisium itself is no longer updated; Noisiumed is its maintained fork.");
 			this.add(UTFTranslationKeys.performanceModDescription("lithium"), "Speeds up ticking, mob AI, physics and parts of world generation, without changing how the game plays.");
 			this.add(UTFTranslationKeys.performanceModDescription("modernFix"), "Cuts loading times and memory use.");

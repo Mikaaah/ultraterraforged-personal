@@ -31,7 +31,7 @@ vanillaWaterFlow=true
 flowVanillaRivers=true
 ```
 
-When Streams is installed, the integration configuration is created at `config/tnkterraforged-streams.toml` with switches for uphill correction, current speed, max depth, loaded-water correction, scan radius and `fastRiverScan=true`. The fast path only reuses already-generated **live** tile cells; absent or retired tiles always fall back to full native sampling. Disable `fastRiverScan` if comparing river-current behavior, and use `/utfstreams status` to view avoided samples.
+When Streams is installed, the integration configuration is created at `config/tnkterraforged/streams.toml` with switches for uphill correction, current speed, max depth, loaded-water correction, scan radius and `fastRiverScan=true`. The fast path only reuses already-generated **live** tile cells; absent or retired tiles always fall back to full native sampling. Disable `fastRiverScan` if comparing river-current behavior, and use `/utfstreams status` to view avoided samples.
 
 ## Diagnostics
 

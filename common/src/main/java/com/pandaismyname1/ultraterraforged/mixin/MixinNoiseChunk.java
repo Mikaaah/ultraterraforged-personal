@@ -22,8 +22,11 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.NoiseSettings;
 import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.biome.Climate;
+import java.util.List;
 import com.pandaismyname1.ultraterraforged.data.preset.settings.Preset;
 import com.pandaismyname1.ultraterraforged.world.worldgen.GeneratorContext;
+import com.pandaismyname1.ultraterraforged.world.worldgen.biome.UTFClimateSampler;
 import com.pandaismyname1.ultraterraforged.world.worldgen.UTFRandomState;
 import com.pandaismyname1.ultraterraforged.world.worldgen.WorldGenFlags;
 import com.pandaismyname1.ultraterraforged.world.worldgen.densityfunction.CellSampler;
@@ -32,6 +35,13 @@ import com.pandaismyname1.ultraterraforged.world.worldgen.tile.TileChunkRef;
 
 @Mixin(NoiseChunk.class)
 class MixinNoiseChunk {
+	@Inject(method = "cachedClimateSampler", at = @At("RETURN"))
+	private void tnk$copyBiomeExclusions(NoiseRouter router, List<Climate.ParameterPoint> points,
+			CallbackInfoReturnable<Climate.Sampler> callback) {
+		UTFClimateSampler global = (UTFClimateSampler) (Object) this.randomState.sampler();
+		UTFClimateSampler cached = (UTFClimateSampler) (Object) callback.getReturnValue();
+		cached.copyBiomeSelection(global);
+	}
 	private RandomState randomState;
 	private int chunkX, chunkZ;
 	private int generationHeight;

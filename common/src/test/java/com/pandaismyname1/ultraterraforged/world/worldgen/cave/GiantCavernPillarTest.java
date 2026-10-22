@@ -45,27 +45,24 @@ public class GiantCavernPillarTest {
         }
         assertNotNull(chamber, "Unable to locate a viable cavern");
 
-        // Same x/z noise used to decide which columns become pillars.
-        var pillarNoise = Noises.worleyEdge(SEED + 2, 27);
         int px = Integer.MIN_VALUE, pz = Integer.MIN_VALUE;
         int ox = Integer.MIN_VALUE, oz = Integer.MIN_VALUE;
         int centerX = Math.round(chamber.x()), centerZ = Math.round(chamber.z());
-
-        for (int dz = -32; dz <= 32; dz++) {
-            for (int dx = -32; dx <= 32; dx++) {
-                int x = centerX + dx, z = centerZ + dz;
-                float flat = (float) (Math.pow((x - chamber.x()) / chamber.radiusX(), 2)
-                        + Math.pow((z - chamber.z()) / chamber.radiusZ(), 2));
-                if (flat >= 0.12F) continue;
-                float noise = pillarNoise.compute(x, z, 0);
-                if (noise < 0.12F && px == Integer.MIN_VALUE) {
-                    px = x;
-                    pz = z;
-                } else if (noise > 0.30F && ox == Integer.MIN_VALUE) {
-                    ox = x;
-                    oz = z;
-                }
-            }
+        int water = (int)(chamber.y()-chamber.radiusY()*0.53F);
+        var pillarChunks = new java.util.HashMap<Long,java.util.List<GiantCaverns.Pillar>>();
+        for (int dz=-70;dz<=70;dz++) for (int dx=-70;dx<=70;dx++) {
+            int x=centerX+dx,z=centerZ+dz;
+            float flat=(float)(Math.pow((x-chamber.x())/chamber.radiusX(),2)
+                    +Math.pow((z-chamber.z())/chamber.radiusZ(),2));
+            if (flat>=0.25F) continue;
+            var pillars=pillarChunks.computeIfAbsent(net.minecraft.core.BlockPos.asLong(x>>4,0,z>>4),
+                    key -> generator.pillarsFor(new CaveCarving(world.chunk(x>>4,z>>4),world.context)));
+            boolean core=true;
+            for (int y=water-12;y<=water+4;y++) core &= GiantCaverns.isPillar(pillars,x,y,z,chamber);
+            if (core && px==Integer.MIN_VALUE) {px=x;pz=z;}
+            if (!GiantCaverns.isPillar(pillars,x,water-4,z,chamber)
+                    && !GiantCaverns.isPillar(pillars,x,water+4,z,chamber) && ox==Integer.MIN_VALUE) {ox=x;oz=z;}
+            if (px!=Integer.MIN_VALUE && ox!=Integer.MIN_VALUE) break;
         }
         assertNotEquals(Integer.MIN_VALUE, px, "Could not locate a test pillar");
         assertNotEquals(Integer.MIN_VALUE, ox, "Could not locate an open lake column");

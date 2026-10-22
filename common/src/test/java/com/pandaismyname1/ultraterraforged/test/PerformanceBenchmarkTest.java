@@ -216,7 +216,7 @@ public class PerformanceBenchmarkTest {
 		}
 	}
 
-	// the presets the dedicated server benchmarks run with, to copy into config/ultraterraforged/server-preset.json
+	// the presets the dedicated server benchmarks run with, to copy into config/tnkterraforged/server-preset.json
 	@Test
 	void writeServerPresets() throws IOException {
 		Path folder = Path.of("build", "bench-presets");

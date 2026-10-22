@@ -61,6 +61,24 @@ public class PresetDatapackTest {
 		}
 	}
 
+    @Test
+    void waterSpringsStayDisabledEvenForAnOlderEnabledPreset() throws Exception {
+        Preset preset = defaultPreset();
+        preset.miscellaneous().vanillaSprings = true;
+        preset.caveFeatures().springs.enabled = true;
+        preset.caveFeatures().springs.frequency = 1.0F;
+        JsonObject spring = file(preset, "data/minecraft/worldgen/placed_feature/spring_water.json").getAsJsonObject();
+        var placements = spring.getAsJsonArray("placement");
+        assertEquals(1, placements.size());
+        assertEquals("minecraft:overworld", placements.get(0).getAsJsonObject().getAsJsonArray("blacklist").get(0).getAsString());
+        var context = com.pandaismyname1.ultraterraforged.world.worldgen.GeneratorContext.makeUncached(preset, 1234, 1, 0, 1);
+        var caves = new com.pandaismyname1.ultraterraforged.world.worldgen.cave.CaveFeatures(context);
+        var field = caves.getClass().getDeclaredField("features");
+        field.setAccessible(true);
+        for (Object feature : (java.util.List<?>) field.get(caves))
+            assertTrue(!feature.getClass().getSimpleName().equals("Springs"));
+    }
+
 	@Test
 	void worldHeightReachesTheDimension() {
 		Preset preset = defaultPreset();

@@ -1,0 +1,114 @@
+name: TNKTerraForged Nature's Spirit 2.3.1 smoke
+on:
+  push:
+    branches: [fix/tnk3-biome-exclusions, main, neoforge-1.21.1, fix/river-water-and-generation]
+    paths:
+      - 'common/src/main/java/com/pandaismyname1/ultraterraforged/world/worldgen/**'
+      - 'common/src/main/java/com/pandaismyname1/ultraterraforged/mixin/MixinSurfaceSystem.java'
+      - 'common/src/main/java/com/pandaismyname1/ultraterraforged/mixin/MixinNoiseBasedChunkGenerator.java'
+      - 'neoforge/src/main/java/nl/townsandkingdoms/terraforged/compat/streams/IntegrationChecks.java'
+      - 'neoforge/build.gradle'
+      - '.github/workflows/tnk-nature-smoke.yml'
+      - 'tools/fetch-nature-smoke-mods.py'
+  workflow_dispatch:
+
+concurrency:
+  group: tnk-nature-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Fetch hash-verified optional compatibility mods
+        run: python3 tools/fetch-nature-smoke-mods.py
+      - name: Configure native-river world
+        run: |
+          mkdir -p neoforge/run/config
+          printf 'eula=true\n' > neoforge/run/eula.txt
+          cat > neoforge/run/server.properties <<'END'
+          level-name=tnk-streams-smoke
+          level-type=ultraterraforged:ultraterraforged
+          level-seed=2031102026
+          spawn-protection=0
+          online-mode=false
+          view-distance=3
+          simulation-distance=3
+          END
+          cat > neoforge/run/config/streamsreflowing.properties <<'END'
+          vanillaWaterFlow=true
+          flowVanillaRivers=true
+          END
+      - name: Force cypress biome while retaining TNK density and terrain
+        run: |
+          python3 - <<'PYCODE'
+          import json
+          from pathlib import Path
+          root=Path('neoforge/run/tnk-streams-smoke/datapacks/cypress-smoke')
+          path=root/'data/ultraterraforged/worldgen/world_preset/ultraterraforged.json'
+          path.parent.mkdir(parents=True,exist_ok=True)
+          source=Path('common/src/main/resources/data/ultraterraforged/worldgen/world_preset/ultraterraforged.json')
+          data=json.loads(source.read_text())
+          data['dimensions']['minecraft:overworld']['generator']['biome_source']={'type':'minecraft:fixed','biome':'natures_spirit:cypress_fields'}
+          path.write_text(json.dumps(data))
+          (root/'pack.mcmeta').write_text(json.dumps({'pack':{'pack_format':48,'description':'Cypress surface compatibility smoke test'}}))
+          PYCODE
+      - name: Start server with Nature's Spirit and inspect generated cypress soil
+        run: |
+          python3 - <<'PY'
+          import os, signal, subprocess, time
+          from pathlib import Path
+          report=Path('neoforge/run/utfstreams-integration-results.json')
+          report.unlink(missing_ok=True)
+          with open('streams-smoke.log','w') as output:
+              process=subprocess.Popen(['./gradlew',':neoforge:runServer','-Putf.perfMods=false','-Ptnk.streamsSmoke=true','-Ptnk.natureSmoke=true','--no-daemon'],stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
+              deadline=time.monotonic()+600
+              while process.poll() is None and not report.exists() and time.monotonic()<deadline:
+                  time.sleep(2)
+                  output.flush()
+                  tail=Path('streams-smoke.log').read_text(errors='replace')[-24000:]
+                  if any(fatal in tail for fatal in ('Failed to start the minecraft server', 'BUILD FAILED', 'Error during pre-loading phase')):
+                      print('Detected startup failure; collecting diagnostics immediately')
+                      break
+              # The report is authoritative. Optional-mod worker threads can keep
+              # the dev JVM alive after Minecraft has finished saving its world.
+              try:
+                  process.wait(timeout=15)
+              except subprocess.TimeoutExpired:
+                  os.killpg(process.pid,signal.SIGTERM)
+                  try:
+                      process.wait(timeout=10)
+                  except subprocess.TimeoutExpired:
+                      os.killpg(process.pid,signal.SIGKILL)
+                      process.wait()
+              print('Server exit:',process.returncode,'report:',report.exists())
+          PY
+          tail -n 150 streams-smoke.log || true
+          test -s neoforge/run/utfstreams-integration-results.json || { echo "No Streams verification report"; exit 1; }
+          python3 - <<'PY'
+          import json
+          p='neoforge/run/utfstreams-integration-results.json'
+          d=json.load(open(p,encoding='utf8'))
+          print(json.dumps(d,indent=2)[:9000])
+          assert d.get('passed') is True, 'Native current integration failed: '+str(d.get('error'))
+          assert d.get('naturesSpiritCypressGrassAndDirt'), 'Cypress soil not validated'
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tnk-natures-spirit-2.3.1-integration-logs
+          path: |
+            streams-smoke.log
+            neoforge/run/utfstreams-integration-results.json
+            neoforge/run/logs/
+          if-no-files-found: warn

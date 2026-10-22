@@ -12,6 +12,9 @@ loom {
 
     runs {
         server {
+            if (project.findProperty("tnk.natureSmoke") == "true") {
+                property "utfstreams.natureSmoke", "true"
+            }
             if (project.findProperty("tnk.streamsSmoke") == "true") {
                 property "utfstreams.integrationTest", "native"
             }
@@ -61,6 +64,12 @@ dependencies {
         modLocalRuntime "maven.modrinth:streams-reflowing:vbJ5meb8"
     }
 
+    if (project.findProperty("tnk.natureSmoke") == "true") {
+        def smokeDir = unpackDevMods(fileTree(".smoke-mods").files.collect { it.toURI().toString() }, "nature-smoke-mods")
+        modLocalRuntime fileTree(new File(smokeDir, "mods")) { include "*.jar" }
+        localRuntime fileTree(new File(smokeDir, "libs")) { include "*.jar" }
+    }
+
     common(project(path: ":common", configuration: "namedElements")) { transitive = false }
     shadowBundle(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive = false }
 
@@ -90,8 +99,8 @@ dependencies {
 // - Loom drops the jars nested in a mod, which hold C2ME's modules, Sodium's mod and the mods' libraries. So each nested
 //   jar is taken out: the mods among them go through Loom on their own, and the libraries go on the classpath, marked as
 //   game libraries as a real game treats them. MixinExtras is left to NeoForge, which ships it.
-File unpackDevMods(List<String> urls) {
-    def dir = layout.buildDirectory.dir("devmods").get().asFile
+File unpackDevMods(List<String> urls, String directoryName = "devmods") {
+    def dir = layout.buildDirectory.dir(directoryName).get().asFile
     def stamp = new File(dir, "sources.txt")
     // bump the version when the unpacking changes, so existing unpacked mods are redone
     def stampText = (["unpacked v2"] + urls).join("\n")

@@ -11,16 +11,26 @@ class WaterContinuityTest {
         int[] profile = {100, 100, 100, 100, 90};
         float[] land = {104/384f, 104/384f, 104/384f, 104/384f, 94/384f};
         WaterLevels.easeMouthTransition(profile, land, 32/384f, levels);
-        assertArrayEquals(new int[]{100, 99, 96, 93, 90}, profile);
+        assertEquals(100, profile[0]);
+        assertEquals(90, profile[4]);
+        for (int i=1;i<profile.length;i++) assertTrue(profile[i-1] - profile[i] <= 6);
     }
 
-    @Test void gorgeLimitStillAppliesAtImpossibleJunctions() {
+    @Test void steepJunctionDoesNotRetainAVerticalWaterWall() {
         Levels levels = new Levels(384, 63);
         int[] profile = {107, 105, 100, 69};
         float[] land = {110/384f, 108/384f, 105/384f, 72/384f};
         WaterLevels.easeMouthTransition(profile, land, 8/384f, levels);
-        assertEquals(97, profile[2]);
+        for (int i=1;i<profile.length;i++) assertTrue(profile[i-1] - profile[i] <= 6, "junction retained a vertical water wall");
+        assertTrue(profile[0] > 78, "steep natural banks were flattened into a deeper trench");
         assertEquals(69, profile[3]);
+    }
+
+    @Test void risingProfileIsNotLoweredIntoAnArtificialTrench() {
+        Levels levels = new Levels(384, 63);
+        int[] profile = {70, 75, 80, 85};
+        WaterLevels.easeMouthTransition(profile, new float[4], 8/384f, levels);
+        assertArrayEquals(new int[]{70, 75, 80, 85}, profile);
     }
 
     @Test void gentleWaterProfilesRemainUnchanged() {

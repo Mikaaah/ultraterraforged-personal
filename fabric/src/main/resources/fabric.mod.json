@@ -31,8 +31,8 @@
     ]
   },
   "mixins": [
-    "ultraterraforged-common.mixins.json",
-    "ultraterraforged-fabric.mixins.json"
+    "tnkterraforged-common.mixins.json",
+    "tnkterraforged-fabric.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.16.0",

@@ -39,6 +39,18 @@ allprojects {
     group = rootProject.maven_group
 
     repositories {
+        // Resolve loader tooling at its authoritative repository instead of probing
+        // every generic mod repository for each NeoForge build dependency.
+        exclusiveContent {
+            forRepository { maven { url = "https://maven.neoforged.net/releases/" } }
+            filter {
+                includeGroup "net.neoforged"
+                includeGroup "net.neoforged.fancymodloader"
+                includeGroup "net.neoforged.installertools"
+                includeGroup "net.neoforged.jst"
+                includeGroup "cpw.mods"
+            }
+        }
         maven { url = "https://maven.shedaniel.me" }
         maven { url = "https://jitpack.io" }
         maven { url = "https://maven.minecraftforge.net/" }

@@ -15,6 +15,8 @@ import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderLookup.RegistryLookup;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
+import com.pandaismyname1.ultraterraforged.world.worldgen.biome.BiomeExclusions;
+import com.pandaismyname1.ultraterraforged.world.worldgen.biome.UTFClimateSampler;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunction.NoiseHolder;
@@ -99,6 +101,11 @@ class MixinRandomState {
 
 	public void ultraterraforged$UTFRandomState$initialize(RegistryAccess registryAccess) {
 		this.registryAccess = registryAccess;
+		if (this.hasContext) {
+			var overworld = registryAccess.registryOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+				.getHolderOrThrow(net.minecraft.resources.ResourceKey.create(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST, net.minecraft.resources.ResourceLocation.withDefaultNamespace("overworld"))).value();
+			((UTFClimateSampler) (Object) this.sampler).setBiomeFallback(BiomeExclusions.fallback(overworld.parameters()));
+		}
 		
 		RegistryLookup<Preset> presets = registryAccess.lookupOrThrow(UTFRegistries.PRESET);
 		RegistryLookup<DensityFunction> functions = registryAccess.lookupOrThrow(Registries.DENSITY_FUNCTION);
@@ -123,6 +130,7 @@ class MixinRandomState {
 					.orElseGet(PerformanceConfig::makeDefault);
                 ThreadPools.configure(config.threadCount());
 				this.generatorContext = GeneratorContext.makeCached(this.preset, (int) this.seed, config.tileSize(), config.batchCount(), ThreadPools.availableProcessors() > 4);
+				((UTFClimateSampler) (Object) this.sampler).setGeneratorContext(this.generatorContext);
 			}
 		});
 	}

@@ -80,6 +80,7 @@ public class RaisedWaterTest {
 		Preset preset = preset();
 		int wet = 0;
 		int leaks = 0;
+        StringBuilder leakDetails = new StringBuilder();
 		for (float[] spot : riverSpots(preset, 5)) {
 			TerrainViews.View view = TerrainViews.view(preset, spot[0], spot[1], 1.0F);
 			for (int x = 1; x < view.size() - 1; x++) {
@@ -95,6 +96,9 @@ public class RaisedWaterTest {
 						// water beside it, raised or the sea's, may be lower: the river steps down there
 						boolean water = view.raisedWater(nx, nz) || view.blockY(nx, nz) < view.levels().waterLevel;
 						if (!water && view.blockY(nx, nz) < top) {
+                            if (leaks < 5) leakDetails.append(" at ").append(view.blockX(nx)).append(",").append(view.blockZ(nz))
+                                .append(" water=").append(top).append(" bank=").append(view.blockY(nx,nz))
+                                .append(" original=").append(view.cell(nx,nz).riverBankBase*view.levels().worldHeight);
 							leaks++;
 							break;
 						}
@@ -104,7 +108,7 @@ public class RaisedWaterTest {
 		}
 		System.out.println(wet + " cells of raised water, " + leaks + " beside lower dry ground");
 		assertTrue(wet > 5000, "only " + wet + " cells of raised water");
-		assertEquals(0, leaks, leaks + " cells of raised water lie beside lower dry ground");
+		assertEquals(0, leaks, leaks + " cells of raised water lie beside lower dry ground" + leakDetails);
 	}
 
 	// Issues #5 and #6: the water's level was worked out from the ground somewhere else than where the water ended up, and
@@ -248,7 +252,7 @@ public class RaisedWaterTest {
 			float side = carver.config.bankWidth + 4.0F;
 			for (float offset : new float[] { 0.0F, side, -side }) {
 				long world = carver.frame.toWorld(PosUtil.unpackLeftf(channel) + river.normX * offset, PosUtil.unpackRightf(channel) + river.normZ * offset);
-				lowest = Math.min(lowest, heightmap.sampleGround(PosUtil.unpackLeftf(world), PosUtil.unpackRightf(world)).height);
+				lowest = Math.min(lowest, heightmap.sampleDrainageGround(PosUtil.unpackLeftf(world), PosUtil.unpackRightf(world)).height);
 			}
 			counts[1]++;
 			// between samples the land can dip or rise, so allow a few blocks
@@ -334,7 +338,7 @@ public class RaisedWaterTest {
 				totals[5]++;
 			}
 			long world = RiverRoutes.channelInWorld(carver, t);
-			float ground = heightmap.sampleGround(PosUtil.unpackLeftf(world), PosUtil.unpackRightf(world)).height;
+			float ground = heightmap.sampleDrainageGround(PosUtil.unpackLeftf(world), PosUtil.unpackRightf(world)).height;
 			if ((ground - water) * levels.worldHeight > gorgeDepth / 2) {
 				totals[3]++;
 			}

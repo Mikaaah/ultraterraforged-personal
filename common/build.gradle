@@ -3,7 +3,7 @@ architectury {
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/ultraterraforged.accesswidener")
+    accessWidenerPath = file("src/main/resources/tnkterraforged.accesswidener")
 }
 
 // Fabric's Mixin 0.17.4 turned the "at" of @Redirect, @ModifyArg, @ModifyArgs and @ModifyVariable into an array. Common
@@ -32,6 +32,12 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    // Explicit instrumentation works on JDK 21 without dynamic self-attachment.
+    doFirst {
+        jvmArgs "-javaagent:" + configurations.testRuntimeClasspath.files.find {
+            it.name.startsWith("mockito-core-") && it.name.endsWith(".jar")
+        }.absolutePath
+    }
     systemProperty "utf.updateGolden", System.getProperty("utf.updateGolden", "false")
     maxHeapSize = "2G"
     testLogging.showStandardStreams = Boolean.getBoolean("utf.showOutput")

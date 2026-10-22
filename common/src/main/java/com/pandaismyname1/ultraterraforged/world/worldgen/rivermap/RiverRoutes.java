@@ -103,7 +103,7 @@ public final class RiverRoutes {
 				long channel = unroute(carver, lineX + river.normX * offset, lineZ + river.normZ * offset);
 				long world = frame.toWorld(PosUtil.unpackLeftf(channel), PosUtil.unpackRightf(channel));
 				// the sea is no lower than its surface, and no place for a river to run along
-				float height = heightmap.sampleGround(PosUtil.unpackLeftf(world), PosUtil.unpackRightf(world)).height * worldHeight;
+				float height = heightmap.sampleDrainageGround(PosUtil.unpackLeftf(world), PosUtil.unpackRightf(world)).height * worldHeight;
 				ground[i][k] = height < sea ? sea + (t < MOUTH ? SEA_COST : 0.0F) : height;
 			}
 		}

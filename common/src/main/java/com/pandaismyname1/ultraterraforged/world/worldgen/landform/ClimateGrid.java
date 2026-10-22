@@ -40,7 +40,7 @@ public record ClimateGrid(Set<BiomeType> climates, float spacing, ThreadLocal<Lo
 		if (cache.size() > 16384) {
 			cache.clear();
 		}
-		BiomeType type = heightmap.sampleTerrain(gridX * this.spacing, gridZ * this.spacing).biomeType;
+		BiomeType type = heightmap.sampleClimateGround(gridX * this.spacing, gridZ * this.spacing).biomeType;
 		float value = this.climates.contains(type) ? 1.0F : 0.0F;
 		cache.put(key, value);
 		return value;

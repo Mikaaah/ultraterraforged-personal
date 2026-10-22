@@ -1050,7 +1050,6 @@ public final class PresetOptions {
 
 	// Cave Features
 
-	private static final Predicate<Preset> UNDERGROUND_RIVERS = (preset) -> preset.caveFeatures().undergroundRivers.enabled;
 	private static final Predicate<Preset> SPRINGS = (preset) -> preset.caveFeatures().springs.enabled;
 	private static final Predicate<Preset> KARST_CAVES = (preset) -> preset.caveFeatures().karstCaves.enabled;
 	private static final Predicate<Preset> LAVA_TUBES = (preset) -> preset.caveFeatures().lavaTubes.enabled;
@@ -1062,18 +1061,6 @@ public final class PresetOptions {
 	private static final Predicate<Preset> CAVE_MOUTHS = (preset) -> preset.caveFeatures().caveMouths.enabled;
 
 	public static final Page CAVE_FEATURES = Page.of("caveFeatures", UTFTranslationKeys.GUI_CAVE_FEATURES_SETTINGS_TITLE,
-		Category.of("undergroundRivers", UTFTranslationKeys.GUI_LABEL_UNDERGROUND_RIVERS,
-			BoolOption.builder("caveFeatures.undergroundRivers.enabled")
-				.translation(UTFTranslationKeys.GUI_BUTTON_UNDERGROUND_RIVERS)
-				.bind((p) -> p.caveFeatures().undergroundRivers.enabled, (p, v) -> p.caveFeatures().undergroundRivers.enabled = v)
-				.build(),
-			FloatOption.builder("caveFeatures.undergroundRivers.frequency")
-				.translation(UTFTranslationKeys.GUI_SLIDER_UNDERGROUND_RIVER_FREQUENCY)
-				.range(0.0F, 1.0F)
-				.activeWhen(UNDERGROUND_RIVERS)
-				.bind((p) -> p.caveFeatures().undergroundRivers.frequency, (p, v) -> p.caveFeatures().undergroundRivers.frequency = v)
-				.build()
-		),
 		Category.of("springs", UTFTranslationKeys.GUI_LABEL_SPRINGS,
 			BoolOption.builder("caveFeatures.springs.enabled")
 				.translation(UTFTranslationKeys.GUI_BUTTON_SPRINGS)

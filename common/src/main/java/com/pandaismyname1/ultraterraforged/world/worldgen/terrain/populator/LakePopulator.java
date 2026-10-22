@@ -134,7 +134,7 @@ public class LakePopulator {
             return;
         }
         float valleyAlpha = this.valleyAlpha(distance2);
-        if (raised && cell.height < level + this.unit && distance2 <= this.shoreRadius() * this.shoreRadius() && cell.waterLevel == 0.0F && !cell.terrain.isRiver()) {
+        if (raised && cell.height < level + this.unit && level + this.unit - (Float.isNaN(cell.riverBankBase) ? cell.height : cell.riverBankBase) <= 2.0F * this.unit && distance2 <= this.shoreRadius() * this.shoreRadius() && cell.waterLevel == 0.0F && !cell.terrain.isRiver()) {
         	// the shore is lower than the lake's water: an embankment keeps it in
         	cell.height = level + this.unit;
         	cell.erosionMask = true;

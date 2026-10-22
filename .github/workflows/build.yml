@@ -30,6 +30,9 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle
 
+      - name: Check TNK3 biome exclusions
+        run: ./gradlew :common:test --tests '*BiomeExclusionsTest' -Putf.perfMods=false
+
       # the performance mods are only for the dev games; leaving them out keeps CI off their Maven servers
       - name: Build Fabric
         run: ./gradlew :fabric:build -Putf.perfMods=false

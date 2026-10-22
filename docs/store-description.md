@@ -69,11 +69,11 @@ Rivers generated before the terrain (no rivers at all), cave and structure setti
 
 ## Dedicated servers
 
-Set `level-type=ultraterraforged:ultraterraforged` in `server.properties` before the world is created. The first start writes the default preset to `config/ultraterraforged/server-preset.json`; edit it, or ship your own, to choose the server's terrain.
+Set `level-type=ultraterraforged:ultraterraforged` in `server.properties` before the world is created. The first start writes the default preset to `config/tnkterraforged/server-preset.json`; edit it, or ship your own, to choose the server's terrain.
 
 ## For modpack authors
 
-A modpack can choose the terrain its players start with, without taking away their ability to change it: save a preset from the Terrain tab, put it in `config/ultraterraforged/modpack-presets/`, and pick it as the default in `config/ultraterraforged/modpack.json`. Players can still switch presets, edit every setting and save their own. Details are in the [README](https://github.com/Pandaismyname1/ultraterraforged#for-modpack-authors).
+A modpack can choose the terrain its players start with, without taking away their ability to change it: save a preset from the Terrain tab, put it in `config/tnkterraforged/modpack-presets/`, and pick it as the default in `config/tnkterraforged/modpack.json`. Players can still switch presets, edit every setting and save their own. Details are in the [README](https://github.com/Pandaismyname1/ultraterraforged#for-modpack-authors).
 
 ## Compatibility
 

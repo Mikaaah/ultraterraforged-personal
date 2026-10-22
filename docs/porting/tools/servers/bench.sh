@@ -11,7 +11,7 @@ ax=$(( ax / 16 * 16 )); az=$(( az / 16 * 16 ))
 cd "$dir" || exit 1
 rm -rf world logs
 sed -i -e "s/^level-seed=.*/level-seed=$seed/" -e "s/^level-type=.*/level-type=${type//:/\\\\:}/" server.properties
-if [ "$preset" != "-" ]; then cp "$preset" config/ultraterraforged/server-preset.json; fi
+if [ "$preset" != "-" ]; then cp "$preset" config/tnkterraforged/server-preset.json; fi
 # the Java the server runs on; 17 for 1.20.1
 J=${JAVA:-java}
 log=$PWD/bench-$label-$seed.log

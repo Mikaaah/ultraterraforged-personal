@@ -23,6 +23,7 @@ public class RiverPopulator implements Comparable<RiverPopulator> {
     // the outer part of the banks, as a share of their width, is raised into a low embankment where the land beside a
     // river is lower than its water
     private static final float LEVEE = 0.3F;
+    private static final float MAX_BANK_FILL = 2.0F;
     public boolean main;
     private boolean connecting;
     private float fade;
@@ -95,7 +96,7 @@ public class RiverPopulator implements Comparable<RiverPopulator> {
     	return this.waterLevels == null ? this.waterLine : sample(this.waterLevels, t);
     }
     
-    // the water stays level from one sample to the next, so it changes in steps: small waterfalls
+    // Interpolate the bounded profile so a reach cannot end in a vertical wall of source water.
     private static float sample(float[] values, float t) {
     	float position = NoiseUtil.clamp(t, 0.0F, 1.0F) * (values.length - 1);
         int index = Math.min((int) position, values.length - 2);
@@ -119,6 +120,10 @@ public class RiverPopulator implements Comparable<RiverPopulator> {
     }
     
     public void apply(Cell cell, float px, float pz, float pt, float x, float z, float t) {
+        // A channel ends where it meets already submerged ground. Otherwise the
+        // raised-river path tags and cuts stripes across the ocean floor.
+        float natural = Float.isNaN(cell.riverBankBase) ? cell.height : cell.riverBankBase;
+        if (natural < this.levels.water(-2) && this.waterLevelAt(t) <= this.levels.water(1)) return;
         float d2 = this.getDistance2(x, z, t);
         float pd2 = this.getDistance2(px, pz, pt);
         float valleyAlpha = this.getDistanceAlpha(pt, Math.min(d2, pd2), this.valleyWidth);
@@ -147,7 +152,7 @@ public class RiverPopulator implements Comparable<RiverPopulator> {
         	cell.riverWidth = (float) Math.sqrt(banksSize);
         }
         if (this.waterLevels != null) {
-        	this.carveRaised(cell, banks, banksSize, bedHeight, level);
+            this.carveRaised(cell, banks, banksSize, bedHeight, level, t);
         	return;
         }
         if (banks >= banksSize) {
@@ -156,21 +161,21 @@ public class RiverPopulator implements Comparable<RiverPopulator> {
         float banksAlpha = 1.0F - banks / banksSize;
         if (cell.height > bedHeight) {
             cell.height = Math.min(NoiseUtil.lerp(cell.height, bedHeight, banksAlpha), cell.height);
-            this.tag(cell, bedHeight, level);
+            this.tag(cell, bedHeight, level, t);
         }
         
         float bedAlpha = this.getDistanceAlpha(t, d2, this.bedWidth);
 
         if (bedAlpha != 0.0F && cell.height > bedHeight) {
             cell.height = NoiseUtil.lerp(cell.height, bedHeight, bedAlpha);
-            this.tag(cell, bedHeight, level);
+            this.tag(cell, bedHeight, level, t);
         }
     }
     
     // a channel down to the bed, as below the sea, with banks rising a little above the water at its edge; beyond that
     // the valley's sides rise at a climbable slope until they meet the land, so a river cutting through high ground
     // runs in a valley as wide as it is deep
-    private void carveRaised(Cell cell, float banks, float banksSize, float bedHeight, float level) {
+    private void carveRaised(Cell cell, float banks, float banksSize, float bedHeight, float level, float t) {
     	float width = (float) Math.sqrt(banksSize);
     	float distance = (float) Math.sqrt(banks);
     	float bankTop = level + BANK_RISE * this.levels.unit;
@@ -180,16 +185,21 @@ public class RiverPopulator implements Comparable<RiverPopulator> {
     	} else {
     		target = bankTop + (distance - width) * SIDE_SLOPE * this.levels.unit;
     	}
+        float natural = Float.isNaN(cell.riverBankBase) ? cell.height : cell.riverBankBase;
+        // A second valley may remove a first river's bank. Retain that original
+        // ground outside the second channel; water-to-water joins remain open.
+        if (target >= level) target = Math.max(target, Math.min(natural, cell.riverBankFloor));
     	if (cell.height > target) {
     		cell.height = target;
-    		this.tag(cell, bedHeight, level);
+            this.tag(cell, bedHeight, level, t);
     	}
     	if (level <= this.levels.water(1)) {
     		return;
     	}
     	// (not across another river's water, like the parent a fork flows into)
     	boolean water = cell.waterLevel > 0.0F || cell.terrain.isRiver() || cell.terrain.isLake() || cell.height < this.waterLine;
-    	if (distance > width * (1.0F - LEVEE) && distance < width + 2.0F && cell.height < level + this.levels.unit && !water) {
+        if (distance > width * (1.0F - LEVEE) && distance < width + 2.0F && cell.height < level + this.levels.unit
+                && level + this.levels.unit - natural <= MAX_BANK_FILL * this.levels.unit && !water) {
     		// the land beside the river is lower than its water: an embankment keeps it in
     		cell.height = level + this.levels.unit;
     		cell.erosionMask = true;
@@ -199,6 +209,10 @@ public class RiverPopulator implements Comparable<RiverPopulator> {
     		// erosion would pile the bed up into islands
     		cell.erosionMask = true;
     	}
+        if (distance < width + 2 && distance > width * (1.0F - LEVEE) && cell.height >= level) {
+            cell.riverBankFloor = Math.max(cell.riverBankFloor, level);
+            cell.erosionMask = true;
+        }
     }
 
     public RiverConfig createForkConfig(float t, Levels levels) {
@@ -246,7 +260,7 @@ public class RiverPopulator implements Comparable<RiverPopulator> {
         return NoiseUtil.lerp(range.min(), range.max(), t * this.fadeInv);
     }
     
-    private void tag(Cell cell, float bedHeight, float level) {
+    private void tag(Cell cell, float bedHeight, float level, float t) {
         if (cell.terrain.overridesRiver() && (cell.height < bedHeight || cell.height > level)) {
             return;
         }
@@ -254,6 +268,8 @@ public class RiverPopulator implements Comparable<RiverPopulator> {
         // under the water; above the sea, land level with the water is dry
         if (level > this.waterLine ? cell.height < level : cell.height <= level) {
             cell.terrain = TerrainType.RIVER;
+            cell.riverCarver = this;
+            cell.riverT = t;
         }
     }
     

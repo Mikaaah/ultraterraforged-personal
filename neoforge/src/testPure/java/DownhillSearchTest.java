@@ -1,4 +1,4 @@
-import nl.townsandkingdoms.utfstreams.DownhillSearch;
+import nl.townsandkingdoms.terraforged.compat.streams.DownhillSearch;
 import java.util.*;
 public final class DownhillSearchTest {
     private static int checks;

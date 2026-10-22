@@ -40,7 +40,7 @@ EOF
     echo "toolchainVersion=25" > gradle/gradle-daemon-jvm.properties
     sed -i 's/gradle-9\.[0-9.]*-bin/gradle-9.5.0-bin/' gradle/wrapper/gradle-wrapper.properties
     # no mappings: the access widener must use the "official" namespace
-    sed -i '1s/.*/accessWidener\tv2\tofficial/' common/src/main/resources/ultraterraforged.accesswidener
+    sed -i '1s/.*/accessWidener\tv2\tofficial/' common/src/main/resources/tnkterraforged.accesswidener
     cat > build.gradle <<'EOF'
 plugins {
     id "architectury-plugin" version "3.5.170"
@@ -62,7 +62,7 @@ EOF
     cat > common/build.gradle <<EOF
 apply plugin: "dev.architectury.loom-no-remap"
 architectury { common("fabric", "neoforge") }
-loom { accessWidenerPath = file("src/main/resources/ultraterraforged.accesswidener") }
+loom { accessWidenerPath = file("src/main/resources/tnkterraforged.accesswidener") }
 dependencies {
     minecraft "com.mojang:minecraft:\${rootProject.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:\${rootProject.fabric_loader_version}"

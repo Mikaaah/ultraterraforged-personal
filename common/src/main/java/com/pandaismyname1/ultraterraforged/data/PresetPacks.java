@@ -18,11 +18,13 @@ import com.pandaismyname1.ultraterraforged.data.preset.settings.Preset;
 // Turns a preset into the datapack a world is created with
 public final class PresetPacks {
 	// the name the preset pack has in a world's datapacks folder
-	public static final String WORLD_PACK_NAME = "ultraterraforged-preset.zip";
+	public static final String WORLD_PACK_PREFIX = "tnkterraforged-preset";
+	public static final String WORLD_PACK_NAME = WORLD_PACK_PREFIX + ".zip";
 
-	// world packs are named ultraterraforged-preset.zip on servers and ultraterraforged-preset-<hash>.zip when made in the Create World screen
+	// New packs use the TNK name; existing worlds keep their selected legacy pack IDs.
 	public static boolean isPresetPack(String packId) {
-		return packId.startsWith("file/ultraterraforged-preset") && packId.endsWith(".zip");
+		return (packId.startsWith("file/" + WORLD_PACK_PREFIX) || packId.startsWith("file/ultraterraforged-preset"))
+            && packId.endsWith(".zip");
 	}
 
 	/**
@@ -32,7 +34,7 @@ public final class PresetPacks {
 	 *                   {@link net.minecraft.data.registries.VanillaRegistries#createLookup()}
 	 */
 	public static void export(Preset preset, HolderLookup.Provider registries, Path zip) throws IOException {
-		Path workDir = Files.createTempDirectory("ultraterraforged-preset-");
+		Path workDir = Files.createTempDirectory("tnkterraforged-preset-");
 		try {
 			Path generated = workDir.resolve("pack");
 			UTFDataGen.makePreset(preset, registries, workDir.resolve("cache"), generated).run();
@@ -40,7 +42,7 @@ public final class PresetPacks {
 			// build next to the target and swap it in, so a half-written or stale pack is never picked up
 			Path parent = zip.toAbsolutePath().getParent();
 			Files.createDirectories(parent);
-			Path partial = Files.createTempFile(parent, "ultraterraforged-preset-", ".zip.tmp");
+			Path partial = Files.createTempFile(parent, "tnkterraforged-preset-", ".zip.tmp");
 			Files.delete(partial);
 			zip(generated, partial);
 			Files.move(partial, zip, StandardCopyOption.REPLACE_EXISTING);

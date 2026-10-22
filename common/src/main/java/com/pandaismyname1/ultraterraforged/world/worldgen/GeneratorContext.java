@@ -13,6 +13,10 @@ import com.pandaismyname1.ultraterraforged.world.worldgen.tile.filter.WorldFilte
 import com.pandaismyname1.ultraterraforged.world.worldgen.util.Seed;
 
 public class GeneratorContext {
+    // Enabled by the optional native-current integration before worlds are created.
+    public static volatile boolean retainRiverData;
+    public final com.pandaismyname1.ultraterraforged.world.worldgen.rivermap.RiverDataCache riverData =
+        new com.pandaismyname1.ultraterraforged.world.worldgen.rivermap.RiverDataCache();
     public Seed seed;
     public Levels levels;
     public Preset preset;

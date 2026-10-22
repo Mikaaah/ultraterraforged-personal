@@ -9,7 +9,7 @@ The pinned original audit identified **23 findings**. This file tracks the live 
 | A03 | Conservative density function bounds | Compiled |
 | A04 | Remove global cache reset at RandomState construction; use weak cache registration and weak scheduler references | Needs repeated create/unload profiling |
 | A05 | Redistribute forced river-mouth height discontinuities backwards respecting gorge limits | WaterContinuityTest; real seed checking still necessary |
-| A06 | Post-carve connected fluid reconciliation; protect dry caves not connected to source water | In-game multi-chunk aquifer tests needed |
+| A06 | Wake exposed existing fluids after carving; removed chunk-local source-water flood that could fill outdoor air | CaveWaterSafetyTest covers exposed hillside/source conservation; in-game multi-chunk aquifer tests still needed |
 | A07 | Count preexisting source water in postprocessing | Compiled |
 | A08 | Restore cell context in finally | Compiled |
 | A09 | Honor terrain blacklist in structure rule | Need dedicated village/ancient-city seed validation |

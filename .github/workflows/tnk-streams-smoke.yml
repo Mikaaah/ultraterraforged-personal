@@ -1,10 +1,10 @@
 name: TNKTerraForged Streams 2.15.2 smoke
 on:
   push:
-    branches: [neoforge-1.21.1]
+    branches: [fix/tnk3-biome-exclusions, main, neoforge-1.21.1, fix/river-water-and-generation]
     paths:
-      - 'neoforge/src/main/java/nl/townsandkingdoms/utfstreams/**'
-      - 'common/src/main/java/nl/townsandkingdoms/utfstreams/**'
+      - 'neoforge/src/main/java/nl/townsandkingdoms/terraforged/compat/streams/**'
+      - 'common/src/main/java/com/pandaismyname1/ultraterraforged/world/worldgen/**'
       - 'neoforge/src/main/resources/tnkterraforged-streams.mixins.json'
       - 'neoforge/src/main/resources/META-INF/neoforge.mods.toml'
       - 'neoforge/build.gradle'
@@ -48,11 +48,34 @@ jobs:
           END
       - name: Start server with optional Streams 2.15.2 and run upstream adapter assertions
         run: |
-          set +e
-          timeout --signal=TERM --kill-after=20s 600s ./gradlew :neoforge:runServer -Putf.perfMods=false -Ptnk.streamsSmoke=true --no-daemon > streams-smoke.log 2>&1
-          status=$?
-          set -e
-          echo "Server exit: $status"
+          python3 - <<'PY'
+          import os, signal, subprocess, time
+          from pathlib import Path
+          report=Path('neoforge/run/utfstreams-integration-results.json')
+          report.unlink(missing_ok=True)
+          with open('streams-smoke.log','w') as output:
+              process=subprocess.Popen(['./gradlew',':neoforge:runServer','-Putf.perfMods=false','-Ptnk.streamsSmoke=true','--no-daemon'],stdout=output,stderr=subprocess.STDOUT,start_new_session=True)
+              deadline=time.monotonic()+600
+              while process.poll() is None and not report.exists() and time.monotonic()<deadline:
+                  time.sleep(2)
+                  output.flush()
+                  tail=Path('streams-smoke.log').read_text(errors='replace')[-24000:]
+                  if any(fatal in tail for fatal in ('Failed to start the minecraft server', 'BUILD FAILED', 'Error during pre-loading phase')):
+                      print('Detected startup failure; collecting diagnostics immediately')
+                      break
+              # The report is authoritative. Optional-mod worker threads can keep
+              # the dev JVM alive after Minecraft has finished saving its world.
+              try:
+                  process.wait(timeout=15)
+              except subprocess.TimeoutExpired:
+                  os.killpg(process.pid,signal.SIGTERM)
+                  try:
+                      process.wait(timeout=10)
+                  except subprocess.TimeoutExpired:
+                      os.killpg(process.pid,signal.SIGKILL)
+                      process.wait()
+              print('Server exit:',process.returncode,'report:',report.exists())
+          PY
           tail -n 150 streams-smoke.log || true
           test -s neoforge/run/utfstreams-integration-results.json || { echo "No Streams verification report"; exit 1; }
           python3 - <<'PY'

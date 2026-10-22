@@ -28,7 +28,7 @@ public final class TerraforgedAlexCavesFix {
     public static final Logger LOG = LogUtils.getLogger();
 
     public TerraforgedAlexCavesFix(ModContainer container) {
-        container.registerConfig(ModConfig.Type.COMMON, FixConfig.SPEC, "ultraterraforged-alex-caves.toml");
+        container.registerConfig(ModConfig.Type.COMMON, FixConfig.SPEC, "tnkterraforged/alex-caves.toml");
         NeoForge.EVENT_BUS.addListener(this::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(this::onLevelUnload);
         NeoForge.EVENT_BUS.addListener(this::onCommands);
@@ -49,7 +49,7 @@ public final class TerraforgedAlexCavesFix {
         }
         var terrain = ((UTFRandomState) (Object) randomState).generatorContext();
         if (terrain == null) {
-            LOG.warn("TFACFix: active UltraTerraForged world has no initialized terrain context; leaving its sampler untouched.");
+            LOG.warn("TFACFix: active TNKTerraForged world has no initialized terrain context; leaving its sampler untouched.");
             return;
         }
         var registry = level.registryAccess().registryOrThrow(Registries.BIOME);
@@ -77,7 +77,7 @@ public final class TerraforgedAlexCavesFix {
                     var source = command.getSource();
                     boolean active = context(source.getLevel().getChunkSource().randomState().sampler()) != null;
                     source.sendSuccess(() -> Component.literal("Terraforged Alex's Caves Fix: "
-                            + (active ? "active UltraTerraForged world" : "inactive for this generator/dimension")
+                            + (active ? "active TNKTerraForged world" : "inactive for this generator/dimension")
                             + "; placement=" + FixConfig.ENABLE_PLACEMENT.get()
                             + "; cave protection=" + FixConfig.PROTECT_CAVES.get()), false);
                     return active ? 1 : 0;

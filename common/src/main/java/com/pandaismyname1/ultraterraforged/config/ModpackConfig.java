@@ -14,8 +14,8 @@ import com.pandaismyname1.ultraterraforged.UTFCommon;
 import com.pandaismyname1.ultraterraforged.platform.ConfigUtil;
 
 /**
- * Defaults a modpack ships in {@code config/ultraterraforged/modpack.json}, next to its own presets in
- * {@code config/ultraterraforged/modpack-presets}. Players can still pick and edit any preset; this only decides what
+ * Defaults a modpack ships in {@code config/tnkterraforged/modpack.json}, next to its own presets in
+ * {@code config/tnkterraforged/modpack-presets}. Players can still pick and edit any preset; this only decides what
  * they start from. Nothing here is written by the mod, so a modpack update can replace these files without touching
  * anything the player saved.
  *

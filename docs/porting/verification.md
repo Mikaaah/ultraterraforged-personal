@@ -28,7 +28,7 @@ It can't see:
 ## Access widener check
 
 ```bash
-python docs/porting/tools/checkaw.py work common/src/main/resources/ultraterraforged.accesswidener
+python docs/porting/tools/checkaw.py work common/src/main/resources/tnkterraforged.accesswidener
 ```
 
 This prints each entry as `ok` or `BREAKS@<first version>` with the reason: class gone, member missing, descriptor changed, or field type changed. It knows the class renames (`ResourceLocation` → `Identifier`, `BootstapContext` → `BootstrapContext`, `Util` → `util.Util`). **Loom silently ignores entries whose targets don't exist**, so this script is the only thing that notices. The same check applies to the hand-written NeoForge `accesstransformer.cfg` from 26.1. Current output: [census/aw-check.txt](census/aw-check.txt): 3 entries break at 1.21.1, 4 more at 26.1, 5 more at 26.2 and 43 more at 26.3. Only 21 of the 76 survive to 26.3, and about 20 are unused today (see the [inventory](inventory.md)), so prune first.

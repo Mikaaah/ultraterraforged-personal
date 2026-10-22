@@ -111,7 +111,7 @@ public class PresetPlacedFeatures {
 		
 		PlacementUtils.register(ctx, SWAMP_SURFACE, features.getOrThrow(PresetConfiguredFeatures.SWAMP_SURFACE));
 		
-        if(!miscellaneous.vanillaSprings) {
+        { // TNK3 policy: disable isolated vanilla water-spring outlets.
         	PlacementUtils.register(ctx, MiscOverworldPlacements.SPRING_WATER, features.getOrThrow(MiscOverworldFeatures.SPRING_WATER), blacklistOverworld);
         }
         

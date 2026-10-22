@@ -94,7 +94,7 @@ abstract class MixinCreateWorldScreen extends Screen implements TerrainState.Hol
 				callback.cancel();
 			}
 		} catch (IOException | RuntimeException e) {
-			UTFCommon.LOGGER.error("Couldn't prepare the UltraTerraForged preset", e);
+			UTFCommon.LOGGER.error("Couldn't prepare the TNKTerraForged preset", e);
 			state.setPendingSelection(null);
 			SystemToast.addOrUpdate(this.minecraft.getToasts(), SystemToast.SystemToastId.PACK_LOAD_FAILURE, Component.translatable(UTFTranslationKeys.GUI_TERRAIN_TAB_APPLY_FAILED), Component.literal(String.valueOf(e.getMessage())));
 			callback.cancel();

@@ -35,8 +35,8 @@ jobs:
           with zipfile.ZipFile(jars[0]) as archive:
               assert archive.testzip() is None
               text=archive.read('META-INF/neoforge.mods.toml').decode()
-              assert 'version="1.0.2+1.21.1"' in text
-              assert 'config="ultraterraforged-alex-caves.mixins.json"' in text
+              assert 'version="1.0.3+1.21.1"' in text
+              assert 'config="tnkterraforged-alex-caves.mixins.json"' in text
               assert 'modId="alexscaves"' in text
               assert 'type="optional"' in text
               # The Alex port is only a compile-time dependency, never bundled.
